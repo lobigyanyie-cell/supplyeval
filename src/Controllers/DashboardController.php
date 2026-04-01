@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Config\Database;
+use App\Config\Settings;
 use PDO;
 use App\Services\AuditLogger;
 
@@ -236,6 +237,8 @@ class DashboardController extends Controller
             $stmt->bindParam(':key', $key);
             $stmt->execute();
         }
+
+        Settings::clearCache();
 
         AuditLogger::log("System Settings Updated");
 

@@ -17,7 +17,10 @@ class Controller
 
     protected function redirect($url)
     {
-        $basePath = '/saas'; // Standardized base path
+        $basePath = getenv('SAAS_BASE_PATH');
+        if ($basePath === false || $basePath === '') {
+            $basePath = '/saas';
+        }
         header("Location: " . $basePath . $url);
         exit;
     }

@@ -34,4 +34,9 @@ class Settings
         self::load();
         return self::$settings;
     }
+
+    public static function clearCache(): void
+    {
+        self::$settings = null;
+    }
 }

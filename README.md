@@ -34,9 +34,14 @@ A production-ready, multi-tenant Supplier Evaluation & Decision Support System b
      ```bash
      mysql -u root -p supplier_saas < sql/seed.sql
      ```
-   - *Note: Ensure your database credentials in `src/Config/Database.php` match your environment.*
+   - *Note: Database credentials can be set via environment variables (`DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`). Defaults match local XAMPP (`localhost`, `supplier_saas`, `root`, empty password).*
 
-3. **Configure Web Server:**
+3. **Platform settings (optional):**
+   - Fresh installs using `sql/schema.sql` include a `settings` table with defaults.
+   - If you upgrade an older database, run once: `php public/migrate_settings.php`
+   - System Admin can set the **evaluation scoring service** base URL and fallback in **Platform Settings** (or use `EVALUATION_SERVICE_URL` / `EVALUATION_SERVICE_FALLBACK` in the environment).
+
+4. **Configure Web Server:**
    - Point your web server's document root to the `public/` directory.
    - Ensure `mod_rewrite` is enabled if using Apache.
    - Example VirtualHost:
@@ -51,10 +56,24 @@ A production-ready, multi-tenant Supplier Evaluation & Decision Support System b
      </VirtualHost>
      ```
 
-4. **Access the Application:**
+5. **Access the Application:**
    - Open your browser and navigate to `http://localhost/saas/public` (or your configured virtual host).
    - **System Admin Creds:** `admin@saas.com` / `admin123`
    - **Seeder Company Admin:** `admin@acme.com` / `password`
+
+## Docker
+
+From the repository root:
+
+```bash
+docker compose up --build -d
+```
+
+- Web UI: `http://localhost:8080/saas/login`
+- Evaluation API (Spring Boot): `http://localhost:8081/api/v1/health`
+- MySQL: `localhost:3306` (user `root`, password `root`)
+
+See `docker/README.txt` for environment variables and troubleshooting.
 
 ## Directory Structure
 - `public/`: Entry point (`index.php`) and assets.
@@ -66,7 +85,7 @@ A production-ready, multi-tenant Supplier Evaluation & Decision Support System b
 - `sql/`: Database scripts.
 
 ## Deployment to Production
-1. **Security**: Update `src/Config/Database.php` with environment variables or a secure configuration file outside the web root.
+1. **Security**: Set `DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` (and optional `EVALUATION_SERVICE_URL`, `SAAS_BASE_PATH`) in the server environment instead of hardcoding credentials.
 2. **SSL**: Ensure HTTPS is enabled.
 3. **Dependencies**: If using Composer packages, run `composer install --no-dev --optimize-autoloader`.
 4. **Permissions**: Ensure web server has read access to all files.

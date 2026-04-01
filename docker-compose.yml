@@ -1,0 +1,64 @@
+# Supplier Evaluation SaaS — PHP (Apache) + MySQL + Spring Boot evaluation service
+#
+# Usage:
+#   docker compose up --build -d
+# App:     http://localhost:8080/saas/login
+# Java API: http://localhost:8081/api/v1/health
+# MySQL:   localhost:3306 (root / root)
+#
+# First-time DB: schema.sql runs on empty mysql volume. If upgrading an existing DB, run:
+#   php public/migrate_settings.php
+# (from host with PHP, or: docker compose exec web php public/migrate_settings.php)
+
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: supplier_saas
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./sql/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+      start_period: 20s
+
+  evaluation:
+    build: ./evaluation-service
+    ports:
+      - "8081:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8080/api/v1/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 8
+      start_period: 45s
+
+  web:
+    build: ./docker/php
+    ports:
+      - "8080:80"
+    volumes:
+      - ./:/var/www/html
+    environment:
+      DB_HOST: mysql
+      DB_NAME: supplier_saas
+      DB_USER: root
+      DB_PASSWORD: root
+      SAAS_BASE_PATH: /saas
+      EVALUATION_SERVICE_URL: http://evaluation:8080
+      # Remove or set to 0 to require Java when URL is set (stricter)
+      EVALUATION_SERVICE_FALLBACK: "1"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      evaluation:
+        condition: service_healthy
+
+volumes:
+  mysql_data:

@@ -6,6 +6,7 @@ use App\Models\Supplier;
 use App\Models\Criteria;
 use App\Models\Evaluation;
 use App\Services\AuditLogger;
+use App\Services\EvaluationScoringService;
 
 class EvaluationController extends Controller
 {
@@ -56,38 +57,21 @@ class EvaluationController extends Controller
         $scores_input = $_POST['scores'] ?? []; // Array of criteria_id => stored_score
         $comments = $_POST['comments'] ?? '';
 
-        // Calculate Weighted Score
-        // We need to fetch criteria weights to be secure, don't trust post data for weights?
-        // Actually, user inputs the score (0-10) for each criteria.
-        // We multiply by weight.
-
         $criteriaModel = new Criteria();
         $stmt = $criteriaModel->readAll($_SESSION['company_id']);
         $allCriteria = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
-        $total_score = 0;
-        $evaluation_scores = [];
-
-        foreach ($allCriteria as $criterion) {
-            $c_id = $criterion['id'];
-            $weight = $criterion['weight']; // e.g. 20 for 20%
-            $max = $criterion['max_score']; // 10
-
-            // User input score for this criteria
-            $input_score = $scores_input[$c_id] ?? 0;
-
-            // Normalize? 
-            // Formula: (Input / Max) * Weight
-            // Example: Input 8/10, Weight 20. Result = (8/10)*20 = 16.
-
-            $calculated_points = ($max > 0) ? ($input_score / $max) * $weight : 0;
-            $total_score += $calculated_points;
-
-            $evaluation_scores[] = [
-                'criteria_id' => $c_id,
-                'score' => $input_score // Storing the raw input score
-            ];
+        try {
+            $scoring = (new EvaluationScoringService())->score($allCriteria, $scores_input);
+        } catch (\RuntimeException $e) {
+            http_response_code(503);
+            echo htmlspecialchars($e->getMessage());
+            return;
         }
+
+        $total_score = $scoring['total_score'];
+        $evaluation_scores = $scoring['evaluation_scores'];
+        $low_score_alert = $scoring['low_score_alert'];
 
         $evaluation = new Evaluation();
         $evaluation->company_id = $_SESSION['company_id'];
@@ -98,8 +82,7 @@ class EvaluationController extends Controller
         $evaluation->scores = $evaluation_scores;
 
         if ($evaluation->create()) {
-            // Check for low score alert (below 50%)
-            if ($total_score < 50) {
+            if ($low_score_alert) {
                 // Fetch supplier name
                 $supplierModel = new \App\Models\Supplier();
                 $supplierModel->id = $supplier_id;

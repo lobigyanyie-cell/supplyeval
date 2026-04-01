@@ -83,3 +83,24 @@ CREATE TABLE IF NOT EXISTS evaluation_scores (
 INSERT INTO users (company_id, name, email, password, role) 
 SELECT NULL, 'System Administrator', 'admin@saas.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'system_admin'
 WHERE NOT EXISTS (SELECT 1 FROM users WHERE email = 'admin@saas.com');
+
+-- Platform settings (system admin UI; keys updated via UPDATE)
+CREATE TABLE IF NOT EXISTS settings (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    setting_key VARCHAR(191) NOT NULL UNIQUE,
+    setting_value TEXT,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+INSERT IGNORE INTO settings (setting_key, setting_value) VALUES
+('site_name', 'SupplierEval'),
+('support_email', ''),
+('currency', 'GHS'),
+('premium_price', '350'),
+('trial_days', '14'),
+('paystack_public_key', ''),
+('paystack_secret_key', ''),
+('sendgrid_api_key', ''),
+('smtp_from', 'noreply@suppliereval.com'),
+('evaluation_service_url', ''),
+('evaluation_service_fallback', '0');

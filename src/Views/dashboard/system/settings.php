@@ -167,6 +167,41 @@
             </div>
         </div>
 
+        <!-- Evaluation scoring (Java service) -->
+        <div class="bg-white rounded-[2rem] shadow-sm border border-slate-200 overflow-hidden">
+            <div class="px-8 py-6 border-b border-slate-100 bg-slate-50/30 flex items-center gap-4">
+                <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="text-lg font-black text-slate-900">Evaluation scoring service</h3>
+                    <p class="text-xs text-slate-400 font-bold uppercase tracking-widest">Spring Boot weighted engine (optional)</p>
+                </div>
+            </div>
+            <div class="p-8 space-y-6">
+                <div class="space-y-2">
+                    <label class="text-sm font-black text-slate-700">Service base URL</label>
+                    <input type="text" name="evaluation_service_url"
+                        value="<?= htmlspecialchars($settings['evaluation_service_url'] ?? '') ?>"
+                        placeholder="http://127.0.0.1:8080 or http://evaluation:8080 (Docker)"
+                        class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-mono text-sm">
+                    <p class="text-xs text-slate-500">Leave empty to score in PHP only. When set, submissions call <code
+                            class="bg-slate-100 px-1 rounded">POST /api/v1/evaluations/score</code> on this host.</p>
+                </div>
+                <div class="space-y-2">
+                    <label class="text-sm font-black text-slate-700">Fallback if service is down</label>
+                    <select name="evaluation_service_fallback"
+                        class="w-full max-w-xs px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-bold">
+                        <option value="0" <?= ($settings['evaluation_service_fallback'] ?? '0') === '0' ? 'selected' : '' ?>>Require Java service (show error)</option>
+                        <option value="1" <?= ($settings['evaluation_service_fallback'] ?? '0') === '1' ? 'selected' : '' ?>>Use PHP calculator if unreachable</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
         <!-- Submit Bar -->
         <div class="sticky bottom-8 z-30 flex justify-end">
             <button type="submit"
