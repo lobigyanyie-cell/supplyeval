@@ -9,7 +9,7 @@ Railway deploys from a Git repository.
 ## 2. Create a Railway project
 
 1. Go to [railway.app](https://railway.app) → **New Project** → **Deploy from GitHub** → select this repo.
-2. Railway detects the root **`Dockerfile`** and builds **PHP 8.2 + Apache**.
+2. Railway detects the root **`Dockerfile`** and builds **PHP 8.2 CLI** with the **built-in web server** (no Apache — avoids MPM / `AH00534` issues on Railway).
 
 ## 3. Add MySQL
 
@@ -53,7 +53,7 @@ Use the **`/saas/...`** path — the Docker image maps that prefix to `public/`.
 
 ## Troubleshooting
 
-- **`AH00534: More than one MPM loaded`** — The Dockerfile removes `mpm_event` / `mpm_worker` and keeps **prefork** only. Redeploy from latest `main`. In Railway: **Redeploy** → enable **Clear build cache** if the error persists (old layers may be cached).
+- **`AH00534: More than one MPM loaded`** — Fixed by **not using Apache** in the Dockerfile (PHP `-S` + `public/router.php`). Pull latest `main` and redeploy with **Clear build cache**.
 - **Database connection errors** — Confirm MySQL is **linked** to the web service and `schema_railway.sql` was run on **`MYSQL_DATABASE`**.
 - **404 on `/`** — Open **`/saas/`** or **`/saas/login`**.
 - **502** — Check **Deploy Logs**; ensure the container starts and MySQL is reachable.
