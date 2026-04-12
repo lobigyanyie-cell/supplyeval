@@ -1,11 +1,8 @@
 # Railway: PHP + Apache only (no Java). App URL: https://<host>/saas/
-FROM php:8.2-apache
+# Bookworm base for reproducible Apache layout; exactly one MPM must load.
+FROM php:8.2-apache-bookworm
 
-# Only one Apache MPM may be loaded; php:apache uses prefork + mod_php
 RUN docker-php-ext-install pdo_mysql mysqli \
-    && (a2dismod mpm_event 2>/dev/null || true) \
-    && (a2dismod mpm_worker 2>/dev/null || true) \
-    && a2enmod mpm_prefork \
     && a2enmod rewrite \
     && echo "ServerName localhost" >> /etc/apache2/apache2.conf
 
@@ -15,6 +12,15 @@ RUN chmod +x /entrypoint.sh
 
 WORKDIR /var/www/html
 COPY . .
+
+# php:apache uses mod_php → requires mpm_prefork only. Remove other MPM symlinks.
+RUN set -eux; \
+    rm -f /etc/apache2/mods-enabled/mpm_event.load \
+          /etc/apache2/mods-enabled/mpm_event.conf \
+          /etc/apache2/mods-enabled/mpm_worker.load \
+          /etc/apache2/mods-enabled/mpm_worker.conf; \
+    if [ ! -e /etc/apache2/mods-enabled/mpm_prefork.load ]; then a2enmod mpm_prefork; fi; \
+    apache2ctl -t
 
 EXPOSE 8080
 

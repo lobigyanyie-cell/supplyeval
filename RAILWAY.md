@@ -53,6 +53,7 @@ Use the **`/saas/...`** path — the Docker image maps that prefix to `public/`.
 
 ## Troubleshooting
 
+- **`AH00534: More than one MPM loaded`** — The Dockerfile removes `mpm_event` / `mpm_worker` and keeps **prefork** only. Redeploy from latest `main`. In Railway: **Redeploy** → enable **Clear build cache** if the error persists (old layers may be cached).
 - **Database connection errors** — Confirm MySQL is **linked** to the web service and `schema_railway.sql` was run on **`MYSQL_DATABASE`**.
 - **404 on `/`** — Open **`/saas/`** or **`/saas/login`**.
 - **502** — Check **Deploy Logs**; ensure the container starts and MySQL is reachable.
