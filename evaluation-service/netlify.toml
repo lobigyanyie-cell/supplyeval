@@ -1,0 +1,11 @@
+[build]
+  command = "./mvnw clean package && cp target/*.jar netlify/"
+  publish = "netlify"
+
+[build.environment]
+  JAVA_VERSION = "17"
+
+[[redirects]]
+  from = "/*"
+  to = "/"
+  status = 200
