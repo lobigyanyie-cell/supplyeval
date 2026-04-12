@@ -19,6 +19,8 @@
         </div>
     <?php endif; ?>
 
+    <?php $old = $old ?? []; ?>
+
     <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
         <form action="/saas/criteria/store" method="POST" class="space-y-6">
 
@@ -27,10 +29,10 @@
                     Criteria Name <span class="text-red-500">*</span>
                 </label>
                 <input type="text" name="name" id="name" required
+                    value="<?= htmlspecialchars($old['name'] ?? '') ?>"
                     class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
                     placeholder="e.g., Quality, Delivery Time, Price Competitiveness">
-                <p class="mt-1 text-xs text-slate-500">Choose a clear, descriptive name for this evaluation criterion
-                </p>
+                <p class="mt-1 text-xs text-slate-500">Each name must be unique for your company (spaces and letter case are ignored for comparison).</p>
             </div>
 
             <div>
@@ -38,6 +40,7 @@
                     Weight (%) <span class="text-red-500">*</span>
                 </label>
                 <input type="number" name="weight" id="weight" min="0" max="100" step="0.1" required
+                    value="<?= htmlspecialchars($old['weight'] ?? '') ?>"
                     class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
                     placeholder="20">
                 <p class="mt-1 text-xs text-slate-500">How important is this criterion? (All weights should sum to 100%)

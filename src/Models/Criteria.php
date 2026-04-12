@@ -56,6 +56,36 @@ class Criteria
         return $stmt;
     }
 
+    /**
+     * True if another criterion in the same company already uses this name (trimmed, case-insensitive).
+     *
+     * @param int|string|null $exclude_id Omit when creating; pass current id when updating.
+     */
+    public function nameExistsForCompany($company_id, string $name, $exclude_id = null): bool
+    {
+        $nameTrim = trim($name);
+        if ($nameTrim === '') {
+            return false;
+        }
+
+        $query = "SELECT id FROM " . $this->table_name . " 
+                  WHERE company_id = :company_id 
+                  AND LOWER(TRIM(name)) = LOWER(TRIM(:name))";
+        if ($exclude_id !== null && $exclude_id !== '') {
+            $query .= " AND id != :exclude_id";
+        }
+        $query .= " LIMIT 1";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":company_id", $company_id);
+        $stmt->bindParam(":name", $nameTrim);
+        if ($exclude_id !== null && $exclude_id !== '') {
+            $stmt->bindParam(":exclude_id", $exclude_id);
+        }
+        $stmt->execute();
+        return (bool) $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
     public function getTotalWeight($company_id, $exclude_id = null)
     {
         $query = "SELECT SUM(weight) as total FROM " . $this->table_name . " WHERE company_id = :company_id";

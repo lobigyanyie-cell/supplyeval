@@ -31,6 +31,7 @@
                 </label>
                 <input type="text" name="name" id="name" required value="<?= htmlspecialchars($criteria['name']) ?>"
                     class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
+                <p class="mt-1 text-xs text-slate-500">Each name must be unique for your company (spaces and letter case are ignored).</p>
             </div>
 
             <div>

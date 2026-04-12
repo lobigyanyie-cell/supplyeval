@@ -48,12 +48,23 @@ class CriteriaController extends Controller
 
         if (($totalWeight + $weight) > 100) {
             $error = "Total weight cannot exceed 100%. (Current: {$totalWeight}%, adding: {$weight}%)";
-            $this->view('criteria/create', ['error' => $error]);
+            $this->view('criteria/create', ['error' => $error, 'old' => $_POST]);
             return;
         }
 
         $criteria->company_id = $_SESSION['company_id'];
-        $criteria->name = $_POST['name'] ?? '';
+        $criteria->name = trim($_POST['name'] ?? '');
+        if ($criteria->name === '') {
+            $this->view('criteria/create', ['error' => 'Criteria name is required.', 'old' => $_POST]);
+            return;
+        }
+        if ($criteria->nameExistsForCompany($_SESSION['company_id'], $criteria->name)) {
+            $this->view('criteria/create', [
+                'error' => 'A criterion with this name already exists. Use a different name.',
+                'old' => $_POST,
+            ]);
+            return;
+        }
         $criteria->weight = $weight;
         $criteria->max_score = $_POST['max_score'] ?? 10;
 
@@ -106,7 +117,21 @@ class CriteriaController extends Controller
             return;
         }
 
-        $criteria->name = $_POST['name'] ?? '';
+        $criteria->name = trim($_POST['name'] ?? '');
+        if ($criteria->name === '') {
+            $this->view('criteria/edit', [
+                'criteria' => array_merge((array) $criteria, $_POST),
+                'error' => 'Criteria name is required.',
+            ]);
+            return;
+        }
+        if ($criteria->nameExistsForCompany($_SESSION['company_id'], $criteria->name, $id)) {
+            $this->view('criteria/edit', [
+                'criteria' => array_merge((array) $criteria, $_POST),
+                'error' => 'A criterion with this name already exists. Use a different name.',
+            ]);
+            return;
+        }
         $criteria->weight = $weight;
         $criteria->max_score = $_POST['max_score'] ?? 10;
 

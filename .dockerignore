@@ -1,0 +1,8 @@
+.git
+.gitignore
+**/target/
+evaluation-service/target/
+.idea
+*.iml
+.env
+.env.*

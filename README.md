@@ -75,6 +75,12 @@ docker compose up --build -d
 
 See `docker/README.txt` for environment variables and troubleshooting.
 
+## Railway (PHP + MySQL, no Java)
+
+Deploy using the root **`Dockerfile`**. Add Railway’s **MySQL** plugin and link it to the web service, then import **`sql/schema_railway.sql`**.
+
+Full steps: **[RAILWAY.md](RAILWAY.md)**. App URL pattern: `https://<your-app>.up.railway.app/saas/login`
+
 ## Directory Structure
 - `public/`: Entry point (`index.php`) and assets.
 - `src/`: Application source code.
