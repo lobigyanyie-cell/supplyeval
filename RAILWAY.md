@@ -14,17 +14,17 @@ Railway deploys from a Git repository.
 ## 3. Add MySQL
 
 1. In the project → **New** → **Database** → **MySQL**.
-2. Open your **web service** → **Variables** → **Add Reference** (or **Connect**) and link the MySQL plugin. Easiest: reference **`MYSQL_URL`** once (full DSN). Railway also exposes:
+2. Open your **web service** → **Variables** → **Add Reference** (or **Connect**) and link the MySQL plugin so these are injected (names may vary slightly):
 
-   - `MYSQLHOST`, `MYSQLPORT`, `MYSQLUSER`, `MYSQLPASSWORD`, `MYSQLDATABASE`, `MYSQL_URL`
+   - `MYSQL_HOST`, `MYSQL_PORT`, `MYSQL_USER`, `MYSQL_PASSWORD`, `MYSQL_DATABASE`
 
-   The app reads `MYSQL_URL` first, then `DATABASE_URL` if it starts with `mysql://`, then `DB_*` / `MYSQL_*` / `MYSQLHOST` style vars (`Database.php`).
+   The app reads these automatically via `Database.php` (no need to duplicate as `DB_*` unless you prefer).
 
 ## 4. Create tables (one-time)
 
 Use Railway’s **MySQL** tab (query console) or the [Railway CLI](https://docs.railway.app/develop/cli) + `mysql` client.
 
-Import **`sql/schema_railway.sql`** (or your full dump such as **`sql/supplier_saas.sql`**) into the **same database** Railway uses — the name is the path in **`MYSQL_URL`** (often **`railway`**), i.e. **`MYSQLDATABASE`**. Importing only on your laptop does not populate Railway’s MySQL.
+Import **`sql/schema_railway.sql`** into the database Railway created (same name as `MYSQL_DATABASE`, often `railway`):
 
 ```bash
 # Example with CLI (get host/user/pass from Railway MySQL variables)
@@ -47,14 +47,14 @@ Use the **`/saas/...`** path — the Docker image maps that prefix to `public/`.
 
 | Variable | Purpose |
 |----------|---------|
-| `MYSQLHOST`, `MYSQLPORT`, … | Injected when MySQL is linked — **required** for DB. |
+| `MYSQL_*` | Injected when MySQL is linked — **required** for DB. |
 | `SAAS_BASE_PATH` | Leave unset to default `/saas` (matches the image). |
 | `EVALUATION_SERVICE_URL` | Leave **unset** for PHP-only scoring. |
 
 ## Troubleshooting
 
 - **`AH00534: More than one MPM loaded`** — Fixed by **not using Apache** in the Dockerfile (PHP `-S` + `public/router.php`). Pull latest `main` and redeploy with **Clear build cache**.
-- **Database connection errors** — Confirm MySQL is **linked** to the web service (so `MYSQLHOST` etc. are set). Run `schema_railway.sql` on the linked database (`MYSQLDATABASE`). If you see `SQLSTATE[HY000] [2002] No such file or directory`, the app was likely using `localhost` without Railway’s host: fix by redeploying after linking MySQL or setting `MYSQLHOST` from the DB service.
+- **Database connection errors** — Confirm MySQL is **linked** to the web service and `schema_railway.sql` was run on **`MYSQL_DATABASE`**.
 - **404 on `/`** — Open **`/saas/`** or **`/saas/login`**.
 - **502** — Check **Deploy Logs**; ensure the container starts and MySQL is reachable.
 

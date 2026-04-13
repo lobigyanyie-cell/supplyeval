@@ -16,19 +16,22 @@ class Database {
     public function __construct()
     {
         $this->db_name = 'supplier_saas';
-        $fromUrl = false;
+        $parsed = false;
+
         $mysqlUrl = getenv('MYSQL_URL');
         if ($mysqlUrl !== false && $mysqlUrl !== '') {
-            $fromUrl = $this->applyMysqlUrl($mysqlUrl);
+            $parsed = $this->applyMysqlUrl($mysqlUrl);
         }
-        if (!$fromUrl) {
+
+        if (!$parsed) {
             $databaseUrl = getenv('DATABASE_URL');
             if ($databaseUrl !== false && $databaseUrl !== '' && str_starts_with($databaseUrl, 'mysql://')) {
-                $fromUrl = $this->applyMysqlUrl($databaseUrl);
+                $parsed = $this->applyMysqlUrl($databaseUrl);
             }
         }
-        if (!$fromUrl) {
-            // DB_*; Railway also exposes MYSQLHOST / MYSQLPORT / ... (no underscore after MYSQL)
+
+        if (!$parsed) {
+            // DB_* plus Railway variants with and without underscores.
             $this->host = $this->firstEnv(['DB_HOST', 'MYSQL_HOST', 'MYSQLHOST'], 'localhost');
             $this->port = $this->firstEnv(['DB_PORT', 'MYSQL_PORT', 'MYSQLPORT'], '3306');
             $this->db_name = $this->firstEnv(['DB_NAME', 'MYSQL_DATABASE', 'MYSQLDATABASE'], 'supplier_saas');
@@ -37,24 +40,24 @@ class Database {
         }
     }
 
-    /**
-     * Railway / platforms often set MYSQL_URL=mysql://user:pass@host:port/dbname
-     */
     private function applyMysqlUrl(string $url): bool
     {
         $parts = parse_url($url);
         if ($parts === false || ($parts['scheme'] ?? '') !== 'mysql') {
             return false;
         }
+
         $this->host = $parts['host'] ?? 'localhost';
         $this->port = isset($parts['port']) ? (string) (int) $parts['port'] : '3306';
         $this->username = isset($parts['user']) ? rawurldecode($parts['user']) : 'root';
         $this->password = isset($parts['pass']) ? rawurldecode($parts['pass']) : '';
+
         $path = $parts['path'] ?? '';
         $db = ltrim((string) $path, '/');
         if ($db !== '') {
             $this->db_name = $db;
         }
+
         return true;
     }
 
@@ -76,17 +79,18 @@ class Database {
         $this->conn = null;
 
         try {
-            // Linux PDO + host "localhost" uses a Unix socket → 2002 No such file in Docker/cloud
+            // Force TCP for localhost to avoid Unix socket lookups in containers.
             $host = $this->host;
             if ($host === 'localhost' || $host === '::1') {
                 $host = '127.0.0.1';
             }
+
             $dsn = 'mysql:host=' . $host . ';port=' . $this->port . ';dbname=' . $this->db_name . ';charset=utf8mb4';
             $this->conn = new PDO($dsn, $this->username, $this->password);
             $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             $this->conn->exec('SET NAMES utf8mb4');
-        } catch (PDOException $exception) {
-            error_log('Database connection failed: ' . $exception->getMessage());
+        } catch(PDOException $exception) {
+            error_log("Connection error: " . $exception->getMessage());
         }
 
         return $this->conn;
