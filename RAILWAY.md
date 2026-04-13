@@ -14,11 +14,11 @@ Railway deploys from a Git repository.
 ## 3. Add MySQL
 
 1. In the project → **New** → **Database** → **MySQL**.
-2. Open your **web service** → **Variables** → **Add Reference** (or **Connect**) and link the MySQL plugin so these are injected (names may vary slightly):
+2. Open your **web service** → **Variables** → **Add Reference** (or **Connect**) and link the MySQL plugin so these are injected. Railway’s MySQL template uses **no underscore after `MYSQL`**:
 
-   - `MYSQL_HOST`, `MYSQL_PORT`, `MYSQL_USER`, `MYSQL_PASSWORD`, `MYSQL_DATABASE`
+   - `MYSQLHOST`, `MYSQLPORT`, `MYSQLUSER`, `MYSQLPASSWORD`, `MYSQLDATABASE`
 
-   The app reads these automatically via `Database.php` (no need to duplicate as `DB_*` unless you prefer).
+   The app reads these (and `DB_*` / `MYSQL_*` variants) via `Database.php`.
 
 ## 4. Create tables (one-time)
 
@@ -47,14 +47,14 @@ Use the **`/saas/...`** path — the Docker image maps that prefix to `public/`.
 
 | Variable | Purpose |
 |----------|---------|
-| `MYSQL_*` | Injected when MySQL is linked — **required** for DB. |
+| `MYSQLHOST`, `MYSQLPORT`, … | Injected when MySQL is linked — **required** for DB. |
 | `SAAS_BASE_PATH` | Leave unset to default `/saas` (matches the image). |
 | `EVALUATION_SERVICE_URL` | Leave **unset** for PHP-only scoring. |
 
 ## Troubleshooting
 
 - **`AH00534: More than one MPM loaded`** — Fixed by **not using Apache** in the Dockerfile (PHP `-S` + `public/router.php`). Pull latest `main` and redeploy with **Clear build cache**.
-- **Database connection errors** — Confirm MySQL is **linked** to the web service and `schema_railway.sql` was run on **`MYSQL_DATABASE`**.
+- **Database connection errors** — Confirm MySQL is **linked** to the web service (so `MYSQLHOST` etc. are set). Run `schema_railway.sql` on the linked database (`MYSQLDATABASE`). If you see `SQLSTATE[HY000] [2002] No such file or directory`, the app was likely using `localhost` without Railway’s host: fix by redeploying after linking MySQL or setting `MYSQLHOST` from the DB service.
 - **404 on `/`** — Open **`/saas/`** or **`/saas/login`**.
 - **502** — Check **Deploy Logs**; ensure the container starts and MySQL is reachable.
 

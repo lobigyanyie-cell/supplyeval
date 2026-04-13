@@ -15,16 +15,13 @@ class Database {
 
     public function __construct()
     {
-        // DB_* or Railway / cloud MySQL plugin (MYSQL_*)
-        $this->host = $this->firstEnv(['DB_HOST', 'MYSQL_HOST'], 'localhost');
-        $this->port = $this->firstEnv(['DB_PORT', 'MYSQL_PORT'], '3306');
-        $this->db_name = $this->firstEnv(['DB_NAME', 'MYSQL_DATABASE'], 'supplier_saas');
-        $this->username = $this->firstEnv(['DB_USER', 'MYSQL_USER'], 'root');
-        $pw = getenv('DB_PASSWORD');
-        if ($pw === false || $pw === '') {
-            $pw = getenv('MYSQL_PASSWORD');
-        }
-        $this->password = $pw !== false ? $pw : '';
+        // DB_*; Railway MySQL template uses MYSQLHOST / MYSQLPORT / ... (no underscore after MYSQL)
+        $this->host = $this->firstEnv(['DB_HOST', 'MYSQL_HOST', 'MYSQLHOST'], 'localhost');
+        $this->port = $this->firstEnv(['DB_PORT', 'MYSQL_PORT', 'MYSQLPORT'], '3306');
+        $this->db_name = $this->firstEnv(['DB_NAME', 'MYSQL_DATABASE', 'MYSQLDATABASE'], 'supplier_saas');
+        $this->username = $this->firstEnv(['DB_USER', 'MYSQL_USER', 'MYSQLUSER'], 'root');
+        $pw = $this->firstEnv(['DB_PASSWORD', 'MYSQL_PASSWORD', 'MYSQLPASSWORD'], '');
+        $this->password = $pw;
     }
 
     /**
