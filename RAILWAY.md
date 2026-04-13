@@ -35,6 +35,14 @@ Or paste the file contents into the SQL console.
 
 Default login after import: **`admin@saas.com`** / **`admin123`** — change this in production.
 
+**Already had a database before evaluation workflow?** Run the one-time migration (adds `evaluations.status` + `evaluation_workflow_events`):
+
+```bash
+php public/migrate_evaluation_workflow.php
+```
+
+Or execute **`sql/migrate_evaluations_workflow.sql`** in the MySQL console (skip if `status` already exists).
+
 ## 5. Open the app
 
 Your public URL will look like:

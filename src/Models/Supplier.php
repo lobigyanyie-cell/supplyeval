@@ -63,7 +63,7 @@ class Supplier
                          MAX(e.created_at) as last_eval_date,
                          DATEDIFF(NOW(), COALESCE(MAX(e.created_at), s.created_at)) as days_since_eval
                   FROM " . $this->table_name . " s 
-                  LEFT JOIN evaluations e ON s.id = e.supplier_id
+                  LEFT JOIN evaluations e ON s.id = e.supplier_id AND e.status = 'submitted'
                   WHERE s.company_id = :company_id 
                   GROUP BY s.id
                   ORDER BY avg_score DESC";
@@ -124,9 +124,9 @@ class Supplier
         $query = "SELECT s.*, 
                          MAX(e.created_at) as last_eval,
                          DATEDIFF(NOW(), COALESCE(MAX(e.created_at), s.created_at)) as days_since_eval,
-                         (SELECT total_score FROM evaluations WHERE supplier_id = s.id ORDER BY created_at DESC LIMIT 1) as latest_score
+                         (SELECT total_score FROM evaluations WHERE supplier_id = s.id AND status = 'submitted' ORDER BY created_at DESC LIMIT 1) as latest_score
                   FROM " . $this->table_name . " s
-                  LEFT JOIN evaluations e ON s.id = e.supplier_id
+                  LEFT JOIN evaluations e ON s.id = e.supplier_id AND e.status = 'submitted'
                   WHERE s.company_id = :company_id
                   GROUP BY s.id
                   HAVING (s.reevaluation_days > 0 AND days_since_eval >= s.reevaluation_days) OR latest_score < 50";

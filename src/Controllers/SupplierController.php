@@ -106,6 +106,51 @@ class SupplierController extends Controller
         ]);
     }
 
+    public function scorecard()
+    {
+        if (!isset($_SESSION['user_id'])) {
+            $this->redirect('/login');
+            return;
+        }
+
+        $id = $_GET['id'] ?? null;
+        if (!$id) {
+            $this->redirect('/suppliers');
+            return;
+        }
+
+        $supplierModel = new Supplier();
+        $supplierModel->id = $id;
+        $supplierModel->company_id = $_SESSION['company_id'];
+        $supplierDetails = $supplierModel->readOne();
+
+        if (!$supplierDetails) {
+            $this->redirect('/suppliers');
+            return;
+        }
+
+        $evaluationModel = new Evaluation();
+        $trend = $evaluationModel->getTrend($id, 12);
+        $breakdown = $evaluationModel->getCriteriaBreakdown($id);
+        $companyAvg = $evaluationModel->getCompanyAverage($_SESSION['company_id']);
+        $stmt = $evaluationModel->getBySupplier($id);
+        $evaluationHistory = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $latestSnapshot = $evaluationModel->getLatestSubmittedScoreLines((int) $id, (int) $_SESSION['company_id']);
+
+        $workflow = new \App\Models\EvaluationWorkflowEvent();
+        $workflowTimeline = $workflow->listBySupplier((int) $id, (int) $_SESSION['company_id'], 200);
+
+        $this->view('suppliers/scorecard', [
+            'supplier' => $supplierDetails,
+            'trend' => $trend,
+            'breakdown' => $breakdown,
+            'companyAvg' => $companyAvg,
+            'evaluationHistory' => $evaluationHistory,
+            'latestSnapshot' => $latestSnapshot,
+            'workflowTimeline' => $workflowTimeline,
+        ]);
+    }
+
     public function rankings()
     {
         if (!isset($_SESSION['user_id'])) {
@@ -125,9 +170,9 @@ class SupplierController extends Controller
                 COUNT(DISTINCT e.id) as evaluation_count,
                 ROUND(AVG(e.total_score), 2) as avg_score,
                 MAX(e.created_at) as latest_evaluation,
-                (SELECT total_score FROM evaluations WHERE supplier_id = s.id ORDER BY created_at DESC LIMIT 1) as latest_score
+                (SELECT total_score FROM evaluations WHERE supplier_id = s.id AND status = 'submitted' ORDER BY created_at DESC LIMIT 1) as latest_score
             FROM suppliers s
-            LEFT JOIN evaluations e ON s.id = e.supplier_id
+            LEFT JOIN evaluations e ON s.id = e.supplier_id AND e.status = 'submitted'
             WHERE s.company_id = :company_id
             GROUP BY s.id
             ORDER BY avg_score DESC, s.name ASC
@@ -158,7 +203,7 @@ class SupplierController extends Controller
                     FROM evaluation_scores es
                     JOIN criteria c ON es.criteria_id = c.id
                     JOIN evaluations e ON es.evaluation_id = e.id
-                    WHERE e.supplier_id = :supplier_id AND e.company_id = :company_id
+                    WHERE e.supplier_id = :supplier_id AND e.company_id = :company_id AND e.status = 'submitted'
                     GROUP BY c.id
                     ORDER BY c.name
                 ");
@@ -221,10 +266,10 @@ class SupplierController extends Controller
                 s.email,
                 COUNT(DISTINCT e.id) as evaluation_count,
                 ROUND(AVG(e.total_score), 2) as avg_score,
-                (SELECT total_score FROM evaluations WHERE supplier_id = s.id ORDER BY created_at DESC LIMIT 1) as latest_score,
+                (SELECT total_score FROM evaluations WHERE supplier_id = s.id AND status = 'submitted' ORDER BY created_at DESC LIMIT 1) as latest_score,
                 MAX(e.created_at) as latest_evaluation
             FROM suppliers s
-            LEFT JOIN evaluations e ON s.id = e.supplier_id
+            LEFT JOIN evaluations e ON s.id = e.supplier_id AND e.status = 'submitted'
             WHERE s.company_id = :company_id
             GROUP BY s.id
             ORDER BY avg_score DESC, s.name ASC
@@ -285,7 +330,7 @@ class SupplierController extends Controller
                     FROM evaluation_scores es
                     JOIN criteria c ON es.criteria_id = c.id
                     JOIN evaluations e ON es.evaluation_id = e.id
-                    WHERE e.supplier_id = :supplier_id AND e.company_id = :company_id
+                    WHERE e.supplier_id = :supplier_id AND e.company_id = :company_id AND e.status = 'submitted'
                     GROUP BY c.id
                     ORDER BY c.name
                 ");
@@ -365,10 +410,10 @@ class SupplierController extends Controller
             SELECT 
                 s.*,
                 ROUND(AVG(e.total_score), 1) as avg_score,
-                (SELECT total_score FROM evaluations WHERE supplier_id = s.id ORDER BY created_at DESC LIMIT 1) as latest_score,
+                (SELECT total_score FROM evaluations WHERE supplier_id = s.id AND status = 'submitted' ORDER BY created_at DESC LIMIT 1) as latest_score,
                 COUNT(e.id) as evaluation_count
             FROM suppliers s
-            LEFT JOIN evaluations e ON s.id = e.supplier_id
+            LEFT JOIN evaluations e ON s.id = e.supplier_id AND e.status = 'submitted'
             WHERE s.company_id = :company_id
             GROUP BY s.id
             ORDER BY avg_score DESC, evaluation_count DESC
@@ -389,8 +434,8 @@ class SupplierController extends Controller
                     FROM evaluation_scores es
                     JOIN criteria c ON es.criteria_id = c.id
                     JOIN evaluations e ON es.evaluation_id = e.id
-                    WHERE e.supplier_id = :sid AND e.company_id = :cid
-                    GROUP BY c.id
+                    WHERE e.supplier_id = :sid AND e.company_id = :cid AND e.status = 'submitted'
+                    GROUP BY c.id, c.name
                 ");
                 $stmt->execute(['sid' => $supplier['id'], 'cid' => $_SESSION['company_id']]);
                 $breakdown = $stmt->fetchAll(\PDO::FETCH_ASSOC);

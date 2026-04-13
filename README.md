@@ -81,6 +81,8 @@ Deploy using the root **`Dockerfile`**. Add Railway’s **MySQL** plugin and lin
 
 Full steps: **[RAILWAY.md](RAILWAY.md)**. App URL pattern: `https://<your-app>.up.railway.app/saas/login`
 
+Existing Railway/MySQL data from an older schema: run **`php public/migrate_evaluation_workflow.php`** once so evaluations support **draft/submit** and the **workflow audit** table exists.
+
 ## Directory Structure
 - `public/`: Entry point (`index.php`) and assets.
 - `src/`: Application source code.

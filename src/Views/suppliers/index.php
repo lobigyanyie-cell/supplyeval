@@ -116,6 +116,10 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <div class="flex items-center justify-end gap-3 text-slate-400">
+                                    <a href="/saas/suppliers/scorecard?id=<?= (int) $supplier['id'] ?>"
+                                        class="text-slate-700 hover:text-slate-900 font-bold" title="Scorecard">
+                                        Scorecard
+                                    </a>
                                     <a href="/saas/evaluations/create?supplier_id=<?= $supplier['id'] ?>"
                                         class="text-indigo-600 hover:text-indigo-900 font-bold" title="Evaluate">
                                         Evaluate

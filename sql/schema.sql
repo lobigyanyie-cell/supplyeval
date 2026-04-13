@@ -61,11 +61,27 @@ CREATE TABLE IF NOT EXISTS evaluations (
     evaluator_id INT, -- Nullable for ON DELETE SET NULL
     total_score DECIMAL(10, 2),
     comments TEXT,
+    status ENUM('draft', 'submitted') NOT NULL DEFAULT 'submitted',
     evaluation_date DATETIME DEFAULT CURRENT_TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE,
     FOREIGN KEY (supplier_id) REFERENCES suppliers(id) ON DELETE CASCADE,
     FOREIGN KEY (evaluator_id) REFERENCES users(id) ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS evaluation_workflow_events (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    evaluation_id INT NOT NULL,
+    company_id INT NOT NULL,
+    user_id INT NULL,
+    action VARCHAR(64) NOT NULL,
+    meta TEXT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_ewe_eval (evaluation_id),
+    INDEX idx_ewe_company (company_id),
+    FOREIGN KEY (evaluation_id) REFERENCES evaluations(id) ON DELETE CASCADE,
+    FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
 );
 
 -- Evaluation Scores Table (Detail)

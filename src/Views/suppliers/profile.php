@@ -36,6 +36,10 @@
             </h1>
         </div>
         <div class="flex items-center gap-3">
+            <a href="/saas/suppliers/scorecard?id=<?= (int) $supplier['id'] ?>"
+                class="px-4 py-2.5 bg-slate-900 rounded-xl text-sm font-bold text-white hover:bg-slate-800 transition-all shadow-lg flex items-center gap-2">
+                Scorecard
+            </a>
             <a href="/saas/evaluations/create?supplier_id=<?= $supplier['id'] ?>"
                 class="px-4 py-2.5 bg-indigo-600 rounded-xl text-sm font-bold text-white hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-600/20 flex items-center gap-2">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -162,8 +166,8 @@
     <div class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
         <div class="px-8 py-6 border-b border-slate-50 flex items-center justify-between bg-slate-50/50">
             <h3 class="text-lg font-black text-slate-900">Recent Evaluations</h3>
-            <button class="text-xs font-bold text-indigo-600 hover:text-indigo-800 uppercase tracking-widest">View
-                All</button>
+            <a href="/saas/suppliers/scorecard?id=<?= (int) $supplier['id'] ?>"
+                class="text-xs font-bold text-indigo-600 hover:text-indigo-800 uppercase tracking-widest">Open scorecard</a>
         </div>
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
@@ -173,6 +177,7 @@
                         <th class="px-8 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Evaluator</th>
                         <th class="px-8 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Score</th>
                         <th class="px-8 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Comments</th>
+                        <th class="px-8 py-4 text-xs font-black text-slate-400 uppercase tracking-widest text-right">Audit</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-50">
@@ -191,15 +196,18 @@
                             </td>
                             <td class="px-8 py-5 text-sm text-slate-500 italic">
                                 "
-                                <?= htmlspecialchars(substr($eval['comments'], 0, 100)) ?>
-                                <?= strlen($eval['comments']) > 100 ? '...' : '' ?>"
+                                <?= htmlspecialchars(substr((string) ($eval['comments'] ?? ''), 0, 100)) ?>
+                                <?= strlen((string) ($eval['comments'] ?? '')) > 100 ? '...' : '' ?>"
+                            </td>
+                            <td class="px-8 py-5 text-right">
+                                <a href="/saas/evaluations/audit?id=<?= (int) $eval['id'] ?>" class="text-xs font-bold text-indigo-600 hover:text-indigo-800">Trail</a>
                             </td>
                         </tr>
                     <?php endforeach; ?>
 
                     <?php if (empty($recentEvaluations)): ?>
                         <tr>
-                            <td colspan="4" class="px-8 py-12 text-center text-slate-400 font-medium">No evaluations found.
+                            <td colspan="5" class="px-8 py-12 text-center text-slate-400 font-medium">No evaluations found.
                             </td>
                         </tr>
                     <?php endif; ?>

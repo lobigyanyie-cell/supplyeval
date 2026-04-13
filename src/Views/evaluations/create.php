@@ -1,15 +1,30 @@
-<?php ob_start(); ?>
+<?php ob_start();
+$draft_evaluation_id = $draft_evaluation_id ?? null;
+$draft_scores = $draft_scores ?? [];
+$draft_comments = $draft_comments ?? '';
+?>
 
 <div class="max-w-3xl mx-auto">
     <div class="mb-8">
         <h1 class="text-2xl font-bold text-slate-800">New Evaluation</h1>
         <p class="text-slate-500 mt-1">Evaluating <span class="font-semibold text-indigo-600"><?= htmlspecialchars($supplier['name']) ?></span></p>
+        <?php if (!empty($_GET['draft_saved'])): ?>
+            <div class="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900">
+                Draft saved. You can leave and return anytime — your scores stay private until you submit.
+            </div>
+        <?php endif; ?>
+        <?php if ($draft_evaluation_id): ?>
+            <p class="mt-2 text-sm text-slate-600">You have a <strong>draft</strong> in progress (not visible in rankings until submitted).</p>
+        <?php endif; ?>
     </div>
 
     <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
         <div class="p-8">
             <form action="/saas/evaluations/store" method="POST" class="space-y-8">
-                <input type="hidden" name="supplier_id" value="<?= $supplier['id'] ?>">
+                <input type="hidden" name="supplier_id" value="<?= (int) $supplier['id'] ?>">
+                <?php if ($draft_evaluation_id): ?>
+                    <input type="hidden" name="evaluation_id" value="<?= (int) $draft_evaluation_id ?>">
+                <?php endif; ?>
 
                 <?php if (empty($criteria)): ?>
                     <div class="text-center py-12 bg-slate-50 rounded-xl border-2 border-dashed border-slate-200">
@@ -23,23 +38,28 @@
                     <div class="space-y-6">
                         <h3 class="text-lg font-semibold text-slate-800 border-b border-slate-100 pb-2">Score Criteria</h3>
                         <?php foreach ($criteria as $criterion): ?>
+                            <?php
+                            $cid = (int) $criterion['id'];
+                            $pref = $draft_scores[$cid] ?? $draft_scores[(string) $cid] ?? '';
+                            ?>
                             <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
                                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                     <div>
-                                        <label for="criteria_<?= $criterion['id'] ?>" class="block font-semibold text-slate-800">
+                                        <label for="criteria_<?= $cid ?>" class="block font-semibold text-slate-800">
                                             <?= htmlspecialchars($criterion['name']) ?>
                                         </label>
                                         <span class="inline-flex items-center mt-1 px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-700">
-                                            Weight: <?= $criterion['weight'] ?>%
+                                            Weight: <?= htmlspecialchars((string) $criterion['weight']) ?>%
                                         </span>
                                     </div>
                                     <div class="flex items-center gap-2">
-                                        <input type="number" name="scores[<?= $criterion['id'] ?>]"
-                                            id="criteria_<?= $criterion['id'] ?>" min="0"
-                                            max="<?= $criterion['max_score'] ?>" required
+                                        <input type="number" name="scores[<?= $cid ?>]"
+                                            id="criteria_<?= $cid ?>" min="0"
+                                            max="<?= (int) $criterion['max_score'] ?>"
+                                            value="<?= $pref !== '' && $pref !== null ? htmlspecialchars((string) $pref) : '' ?>"
                                             class="w-24 rounded-lg border-slate-300 focus:border-indigo-500 focus:ring-indigo-500 font-semibold text-center text-slate-900"
-                                            placeholder="0-<?= $criterion['max_score'] ?>">
-                                        <span class="text-slate-500 font-medium">/ <?= $criterion['max_score'] ?></span>
+                                            placeholder="0-<?= (int) $criterion['max_score'] ?>">
+                                        <span class="text-slate-500 font-medium">/ <?= (int) $criterion['max_score'] ?></span>
                                     </div>
                                 </div>
                             </div>
@@ -50,17 +70,21 @@
                         <label for="comments" class="block text-lg font-semibold text-slate-800 mb-2">Comments & Notes</label>
                         <textarea name="comments" id="comments" rows="4"
                             class="w-full rounded-xl border-slate-300 focus:border-indigo-500 focus:ring-indigo-500 shadow-sm transition-colors text-slate-900"
-                            placeholder="Add any additional context, observations, or feedback for this evaluation..."></textarea>
+                            placeholder="Add any additional context, observations, or feedback for this evaluation..."><?= htmlspecialchars($draft_comments) ?></textarea>
                     </div>
 
-                    <div class="pt-6 border-t border-slate-100 flex items-center justify-end gap-3">
+                    <div class="pt-6 border-t border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3">
                         <a href="/saas/suppliers"
-                            class="px-5 py-2.5 border border-slate-300 rounded-lg text-slate-700 font-medium hover:bg-slate-50 transition-colors">
+                            class="px-5 py-2.5 border border-slate-300 rounded-lg text-slate-700 font-medium hover:bg-slate-50 transition-colors text-center">
                             Cancel
                         </a>
-                        <button type="submit"
+                        <button type="submit" name="workflow_action" value="draft" formnovalidate
+                            class="px-5 py-2.5 border border-indigo-200 bg-indigo-50 text-indigo-800 rounded-lg font-medium hover:bg-indigo-100 transition-colors">
+                            Save draft
+                        </button>
+                        <button type="submit" name="workflow_action" value="submit"
                             class="px-5 py-2.5 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all hover:-translate-y-0.5">
-                            Submit Evaluation
+                            Submit evaluation
                         </button>
                     </div>
                 <?php endif; ?>

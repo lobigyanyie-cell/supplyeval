@@ -95,14 +95,14 @@ class DashboardController extends Controller
             $stmt->execute();
             $total_suppliers = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
 
-            // Total Evaluations
-            $stmt = $conn->prepare("SELECT COUNT(*) as count FROM evaluations WHERE company_id = :cid");
+            // Total Evaluations (submitted only; drafts excluded)
+            $stmt = $conn->prepare("SELECT COUNT(*) as count FROM evaluations WHERE company_id = :cid AND status = 'submitted'");
             $stmt->bindParam(':cid', $company_id);
             $stmt->execute();
             $total_evaluations = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
 
             // Average Score
-            $stmt = $conn->prepare("SELECT AVG(total_score) as avg_score FROM evaluations WHERE company_id = :cid");
+            $stmt = $conn->prepare("SELECT AVG(total_score) as avg_score FROM evaluations WHERE company_id = :cid AND status = 'submitted'");
             $stmt->bindParam(':cid', $company_id);
             $stmt->execute();
             $avg_score = $stmt->fetch(PDO::FETCH_ASSOC)['avg_score'];
@@ -112,7 +112,7 @@ class DashboardController extends Controller
                                     FROM evaluations e 
                                     JOIN suppliers s ON e.supplier_id = s.id 
                                     JOIN users u ON e.evaluator_id = u.id 
-                                    WHERE e.company_id = :cid 
+                                    WHERE e.company_id = :cid AND e.status = 'submitted'
                                     ORDER BY e.created_at DESC LIMIT 5");
             $stmt->bindParam(':cid', $company_id);
             $stmt->execute();
@@ -121,7 +121,7 @@ class DashboardController extends Controller
             // 1. Performance Trends (Last 6 Months Average)
             $stmt = $conn->prepare("SELECT DATE_FORMAT(MIN(created_at), '%b %Y') as month, ROUND(AVG(total_score), 1) as avg
                                     FROM evaluations 
-                                    WHERE company_id = :cid 
+                                    WHERE company_id = :cid AND status = 'submitted'
                                     GROUP BY DATE_FORMAT(created_at, '%Y-%m') 
                                     ORDER BY DATE_FORMAT(created_at, '%Y-%m') ASC LIMIT 6");
             $stmt->bindParam(':cid', $company_id);
@@ -139,7 +139,7 @@ class DashboardController extends Controller
                             ELSE 'At Risk'
                         END as tier
                     FROM suppliers s
-                    JOIN evaluations e ON s.id = e.supplier_id
+                    JOIN evaluations e ON s.id = e.supplier_id AND e.status = 'submitted'
                     WHERE s.company_id = :cid
                     GROUP BY s.id
                 ) t GROUP BY tier
