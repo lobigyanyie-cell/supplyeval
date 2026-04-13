@@ -4,7 +4,8 @@
 ALTER TABLE evaluations
     ADD COLUMN status ENUM('draft', 'submitted') NOT NULL DEFAULT 'submitted' AFTER comments;
 
-UPDATE evaluations SET status = 'submitted' WHERE status IS NULL OR status = '';
+-- Redundant if DEFAULT applied to existing rows; uses primary key for safe-update mode (Workbench).
+UPDATE evaluations SET status = 'submitted' WHERE id > 0 AND (status IS NULL OR status = '');
 
 CREATE TABLE IF NOT EXISTS evaluation_workflow_events (
     id INT AUTO_INCREMENT PRIMARY KEY,

@@ -23,7 +23,7 @@ if ($check && $check->rowCount() === 0) {
     $conn->exec(
         "ALTER TABLE evaluations ADD COLUMN status ENUM('draft','submitted') NOT NULL DEFAULT 'submitted' AFTER comments"
     );
-    $conn->exec("UPDATE evaluations SET status = 'submitted'");
+    $conn->exec("UPDATE evaluations SET status = 'submitted' WHERE id > 0 AND (status IS NULL OR status = '')");
 } else {
     echo "evaluations.status already present.\n";
 }
