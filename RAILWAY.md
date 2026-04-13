@@ -14,17 +14,17 @@ Railway deploys from a Git repository.
 ## 3. Add MySQL
 
 1. In the project → **New** → **Database** → **MySQL**.
-2. Open your **web service** → **Variables** → **Add Reference** (or **Connect**) and link the MySQL plugin so these are injected. Railway’s MySQL template uses **no underscore after `MYSQL`**:
+2. Open your **web service** → **Variables** → **Add Reference** (or **Connect**) and link the MySQL plugin. Easiest: reference **`MYSQL_URL`** once (full DSN). Railway also exposes:
 
-   - `MYSQLHOST`, `MYSQLPORT`, `MYSQLUSER`, `MYSQLPASSWORD`, `MYSQLDATABASE`
+   - `MYSQLHOST`, `MYSQLPORT`, `MYSQLUSER`, `MYSQLPASSWORD`, `MYSQLDATABASE`, `MYSQL_URL`
 
-   The app reads these (and `DB_*` / `MYSQL_*` variants) via `Database.php`.
+   The app reads `MYSQL_URL` first, then `DATABASE_URL` if it starts with `mysql://`, then `DB_*` / `MYSQL_*` / `MYSQLHOST` style vars (`Database.php`).
 
 ## 4. Create tables (one-time)
 
 Use Railway’s **MySQL** tab (query console) or the [Railway CLI](https://docs.railway.app/develop/cli) + `mysql` client.
 
-Import **`sql/schema_railway.sql`** into the database Railway created (same name as `MYSQL_DATABASE`, often `railway`):
+Import **`sql/schema_railway.sql`** (or your full dump such as **`sql/supplier_saas.sql`**) into the **same database** Railway uses — the name is the path in **`MYSQL_URL`** (often **`railway`**), i.e. **`MYSQLDATABASE`**. Importing only on your laptop does not populate Railway’s MySQL.
 
 ```bash
 # Example with CLI (get host/user/pass from Railway MySQL variables)

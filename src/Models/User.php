@@ -23,8 +23,16 @@ class User
         $this->conn = $database->getConnection();
     }
 
+    public function isConnected(): bool
+    {
+        return $this->conn !== null;
+    }
+
     public function create()
     {
+        if ($this->conn === null) {
+            return false;
+        }
         $query = "INSERT INTO " . $this->table_name . " 
                 (company_id, name, email, password, role) 
                 VALUES (:company_id, :name, :email, :password, :role)";
@@ -52,6 +60,9 @@ class User
 
     public function login($email, $password)
     {
+        if ($this->conn === null) {
+            return false;
+        }
         $query = "SELECT id, company_id, name, email, password, role FROM " . $this->table_name . " WHERE email = :email LIMIT 1";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(":email", $email);
@@ -68,6 +79,9 @@ class User
 
     public function emailExists($email)
     {
+        if ($this->conn === null) {
+            return false;
+        }
         $query = "SELECT id FROM " . $this->table_name . " WHERE email = :email LIMIT 1";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(":email", $email);
@@ -79,6 +93,9 @@ class User
     }
     public function getCompanyAdminEmail($company_id)
     {
+        if ($this->conn === null) {
+            return null;
+        }
         $query = "SELECT email FROM " . $this->table_name . " WHERE company_id = :company_id AND role = 'company_admin' LIMIT 1";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(":company_id", $company_id);

@@ -34,6 +34,10 @@ class AuthController extends Controller
         }
 
         $user = new User();
+        if (!$user->isConnected()) {
+            $this->view('auth/register', ['error' => 'Cannot connect to the database. On Railway, link MySQL and reference MYSQL_URL or MYSQLHOST (see RAILWAY.md).']);
+            return;
+        }
         if ($user->emailExists($email)) {
             $this->view('auth/register', ['error' => 'Email already registered.']);
             return;
@@ -42,6 +46,10 @@ class AuthController extends Controller
         // Start Transaction
         $db = new \App\Config\Database();
         $conn = $db->getConnection();
+        if ($conn === null) {
+            $this->view('auth/register', ['error' => 'Cannot connect to the database.']);
+            return;
+        }
         $conn->beginTransaction();
 
         try {
@@ -104,6 +112,12 @@ class AuthController extends Controller
         }
 
         $user = new User();
+        if (!$user->isConnected()) {
+            $this->view('auth/login', [
+                'error' => 'Cannot connect to the database. On Railway: Web service → Variables → add reference to MYSQL_URL from your MySQL service (or MYSQLHOST, MYSQLPORT, MYSQLUSER, MYSQLPASSWORD, MYSQLDATABASE), redeploy, and import your SQL into that database (name in MYSQL_URL / MYSQLDATABASE).',
+            ]);
+            return;
+        }
         $loggedInUser = $user->login($email, $password);
 
         if ($loggedInUser) {
@@ -111,6 +125,10 @@ class AuthController extends Controller
             if ($loggedInUser['company_id']) {
                 $db = new \App\Config\Database();
                 $conn = $db->getConnection();
+                if ($conn === null) {
+                    $this->view('auth/login', ['error' => 'Database unavailable.']);
+                    return;
+                }
                 $stmt = $conn->prepare("SELECT account_status FROM companies WHERE id = :id");
                 $stmt->bindParam(':id', $loggedInUser['company_id']);
                 $stmt->execute();
@@ -157,6 +175,10 @@ class AuthController extends Controller
         }
 
         $user = new User();
+        if (!$user->isConnected()) {
+            $this->view('auth/forgot_password', ['error' => 'Cannot connect to the database.']);
+            return;
+        }
         if (!$user->emailExists($email)) {
             // Show success anyway to prevent email harvesting
             $this->view('auth/forgot_password', ['success' => 'If this email is registered, you will receive a reset link shortly.']);
@@ -166,6 +188,10 @@ class AuthController extends Controller
         $token = bin2hex(random_bytes(32));
         $db = new \App\Config\Database();
         $conn = $db->getConnection();
+        if ($conn === null) {
+            $this->view('auth/forgot_password', ['error' => 'Cannot connect to the database.']);
+            return;
+        }
 
         // Store token
         $stmt = $conn->prepare("INSERT INTO password_resets (email, token) VALUES (:email, :token)");
