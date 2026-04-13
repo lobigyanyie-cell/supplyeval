@@ -54,7 +54,7 @@ class DashboardController extends Controller
                                   FROM transactions 
                                   WHERE status = 'succeeded' 
                                   GROUP BY DATE_FORMAT(created_at, '%Y-%m') 
-                                  ORDER BY created_at ASC LIMIT 6");
+                                  ORDER BY DATE_FORMAT(created_at, '%Y-%m') ASC LIMIT 6");
             $revenue_trends = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             // Tenant Distribution
@@ -123,7 +123,7 @@ class DashboardController extends Controller
                                     FROM evaluations 
                                     WHERE company_id = :cid 
                                     GROUP BY DATE_FORMAT(created_at, '%Y-%m') 
-                                    ORDER BY created_at ASC LIMIT 6");
+                                    ORDER BY DATE_FORMAT(created_at, '%Y-%m') ASC LIMIT 6");
             $stmt->bindParam(':cid', $company_id);
             $stmt->execute();
             $performance_trends = $stmt->fetchAll(PDO::FETCH_ASSOC);
