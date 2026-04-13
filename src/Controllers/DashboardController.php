@@ -50,7 +50,7 @@ class DashboardController extends Controller
             $recent_transactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             // Revenue Trends (Last 6 Months)
-            $stmt = $conn->query("SELECT DATE_FORMAT(created_at, '%b %Y') as month, SUM(amount) as total 
+            $stmt = $conn->query("SELECT DATE_FORMAT(MIN(created_at), '%b %Y') as month, SUM(amount) as total 
                                   FROM transactions 
                                   WHERE status = 'succeeded' 
                                   GROUP BY DATE_FORMAT(created_at, '%Y-%m') 
@@ -119,7 +119,7 @@ class DashboardController extends Controller
             $recent_evaluations = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             // 1. Performance Trends (Last 6 Months Average)
-            $stmt = $conn->prepare("SELECT DATE_FORMAT(created_at, '%b %Y') as month, ROUND(AVG(total_score), 1) as avg
+            $stmt = $conn->prepare("SELECT DATE_FORMAT(MIN(created_at), '%b %Y') as month, ROUND(AVG(total_score), 1) as avg
                                     FROM evaluations 
                                     WHERE company_id = :cid 
                                     GROUP BY DATE_FORMAT(created_at, '%Y-%m') 
