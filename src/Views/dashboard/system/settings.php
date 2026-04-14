@@ -132,7 +132,7 @@
             </div>
         </div>
 
-        <!-- Email Engine (SendGrid API) -->
+        <!-- Email Engine -->
         <div class="bg-white rounded-[2rem] shadow-sm border border-slate-200 overflow-hidden">
             <div class="px-8 py-6 border-b border-slate-100 bg-slate-50/30 flex items-center gap-4">
                 <div class="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
@@ -142,12 +142,19 @@
                     </svg>
                 </div>
                 <div>
-                    <h3 class="text-lg font-black text-slate-900">Email Engine (SendGrid API)</h3>
-                    <p class="text-xs text-slate-400 font-bold uppercase tracking-widest">Production-grade delivery</p>
+                    <h3 class="text-lg font-black text-slate-900">Email Engine (Brevo / SendGrid)</h3>
+                    <p class="text-xs text-slate-400 font-bold uppercase tracking-widest">Brevo preferred, SendGrid fallback</p>
                 </div>
             </div>
             <div class="p-8 space-y-6">
                 <div class="space-y-4">
+                    <div class="space-y-2">
+                        <label class="text-sm font-black text-slate-700">Brevo API Key</label>
+                        <input type="password" name="brevo_api_key"
+                            value="<?= htmlspecialchars($settings['brevo_api_key'] ?? '') ?>"
+                            placeholder="xkeysib-xxxxxxxxxx"
+                            class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-mono text-sm tracking-widest">
+                    </div>
                     <div class="space-y-2">
                         <label class="text-sm font-black text-slate-700">SendGrid API Key</label>
                         <input type="password" name="sendgrid_api_key"
@@ -160,8 +167,7 @@
                         <input type="email" name="smtp_from"
                             value="<?= htmlspecialchars($settings['smtp_from'] ?? 'noreply@suppliereval.com') ?>"
                             class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium">
-                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-tight">Must be a verified
-                            sender in your SendGrid dashboard</p>
+                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-tight">Must be verified in your Brevo or SendGrid sender settings</p>
                     </div>
                 </div>
             </div>

@@ -110,6 +110,7 @@ INSERT IGNORE INTO settings (setting_key, setting_value) VALUES
 ('trial_days', '14'),
 ('paystack_public_key', ''),
 ('paystack_secret_key', ''),
+('brevo_api_key', ''),
 ('sendgrid_api_key', ''),
 ('smtp_from', 'noreply@suppliereval.com'),
 ('evaluation_service_url', ''),

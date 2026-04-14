@@ -7,28 +7,40 @@ use App\Config\Settings;
 class EmailService
 {
     /**
-     * Send a professional HTML email via SendGrid API.
+     * Send a professional HTML email via Brevo/SendGrid with mail() fallback.
      */
     public static function send($to, $subject, $messageBody, $ctaText = null, $ctaUrl = null)
     {
-        $apiKey = Settings::get('sendgrid_api_key');
+        $brevoApiKey = Settings::get('brevo_api_key', getenv('BREVO_API_KEY') ?: '');
+        $sendgridApiKey = Settings::get('sendgrid_api_key', getenv('SENDGRID_API_KEY') ?: '');
         $fromEmail = Settings::get('smtp_from', 'noreply@suppliereval.com');
         $siteName = Settings::get('site_name', 'SupplierEval');
+        $htmlContent = self::getTemplate($subject, $messageBody, $ctaText, $ctaUrl);
 
-        // Fallback to basic mail() if API key is missing
-        if (empty($apiKey)) {
+        if (!empty($brevoApiKey) && self::sendViaBrevo($brevoApiKey, $to, $subject, $htmlContent, $fromEmail, $siteName)) {
+            return true;
+        }
+
+        if (!empty($sendgridApiKey) && self::sendViaSendGrid($sendgridApiKey, $to, $subject, $htmlContent, $fromEmail, $siteName)) {
+            return true;
+        }
+
+        // Final fallback to basic mail()
+        if (empty($brevoApiKey) && empty($sendgridApiKey)) {
             $headers = [
                 'MIME-Version: 1.0',
                 'Content-type: text/html; charset=utf-8',
                 'From: ' . $siteName . ' <' . $fromEmail . '>',
                 'X-Mailer: PHP/' . phpversion()
             ];
-            $htmlContent = self::getTemplate($subject, $messageBody, $ctaText, $ctaUrl);
             return mail($to, $subject, $htmlContent, implode("\r\n", $headers));
         }
 
-        $htmlContent = self::getTemplate($subject, $messageBody, $ctaText, $ctaUrl);
+        return false;
+    }
 
+    private static function sendViaSendGrid(string $apiKey, string $to, string $subject, string $htmlContent, string $fromEmail, string $siteName): bool
+    {
         $data = [
             'personalizations' => [
                 [
@@ -57,7 +69,38 @@ class EmailService
         curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
-        $response = curl_exec($ch);
+        curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        return $httpCode >= 200 && $httpCode < 300;
+    }
+
+    private static function sendViaBrevo(string $apiKey, string $to, string $subject, string $htmlContent, string $fromEmail, string $siteName): bool
+    {
+        $data = [
+            'sender' => [
+                'name' => $siteName,
+                'email' => $fromEmail,
+            ],
+            'to' => [
+                ['email' => $to],
+            ],
+            'subject' => $subject,
+            'htmlContent' => $htmlContent,
+        ];
+
+        $ch = curl_init('https://api.brevo.com/v3/smtp/email');
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'api-key: ' . $apiKey,
+            'Content-Type: application/json',
+            'Accept: application/json',
+        ]);
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+        curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
 
