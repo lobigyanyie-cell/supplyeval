@@ -47,6 +47,20 @@
                     <p class="text-sm font-bold text-emerald-900">
                         <?= $success ?>
                     </p>
+                    <?php if (isset($delivery_warning)): ?>
+                        <p class="mt-3 text-sm font-medium text-amber-800">
+                            <?= htmlspecialchars($delivery_warning) ?>
+                        </p>
+                    <?php endif; ?>
+                    <?php if (isset($reset_url)): ?>
+                        <div class="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-left">
+                            <p class="text-xs font-bold uppercase tracking-widest text-amber-800">Reset Link</p>
+                            <a href="<?= htmlspecialchars($reset_url) ?>"
+                                class="mt-2 block break-all text-sm font-semibold text-brand-700 underline hover:text-brand-800">
+                                <?= htmlspecialchars($reset_url) ?>
+                            </a>
+                        </div>
+                    <?php endif; ?>
                     <a href="/saas/login"
                         class="mt-4 inline-block text-xs font-black uppercase tracking-widest text-emerald-600 hover:text-emerald-700 underline">Back
                         to Login</a>

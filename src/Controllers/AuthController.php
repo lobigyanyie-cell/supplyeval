@@ -173,7 +173,7 @@ class AuthController extends Controller
 
     public function sendResetLink()
     {
-        $email = $_POST['email'] ?? '';
+        $email = trim($_POST['email'] ?? '');
         if (empty($email)) {
             $this->view('auth/forgot_password', ['error' => 'Email is required.']);
             return;
@@ -186,26 +186,46 @@ class AuthController extends Controller
             return;
         }
 
-        $token = bin2hex(random_bytes(32));
         $db = new \App\Config\Database();
         $conn = $db->getConnection();
+        if ($conn === null) {
+            $this->view('auth/forgot_password', ['error' => 'Database unavailable. Please try again later.']);
+            return;
+        }
 
-        // Store token
-        $stmt = $conn->prepare("INSERT INTO password_resets (email, token) VALUES (:email, :token)");
-        $stmt->execute(['email' => $email, 'token' => $token]);
+        $this->ensurePasswordResetTable($conn);
 
-        // Send Email
-        $resetUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]/saas/reset-password?token=$token";
+        $token = bin2hex(random_bytes(32));
+        $resetUrl = $this->buildResetUrl($token);
 
-        $subject = "Reset Your Password";
-        $body = "We received a request to reset your password. If you didn't make this request, you can safely ignore this email.";
+        try {
+            $stmt = $conn->prepare("DELETE FROM password_resets WHERE email = :email");
+            $stmt->execute(['email' => $email]);
 
+            $stmt = $conn->prepare("INSERT INTO password_resets (email, token) VALUES (:email, :token)");
+            $stmt->execute(['email' => $email, 'token' => $token]);
 
-        \App\Services\EmailService::send($email, $subject, $body, "Reset Password", $resetUrl);
+            $subject = "Reset Your Password";
+            $body = "We received a request to reset your password. If you didn't make this request, you can safely ignore this email.";
+            $emailSent = \App\Services\EmailService::send($email, $subject, $body, "Reset Password", $resetUrl);
 
-        AuditLogger::log("Password Reset Requested", "Email: $email");
+            AuditLogger::log("Password Reset Requested", "Email: $email");
 
-        $this->view('auth/forgot_password', ['success' => 'If this email is registered, you will receive a reset link shortly.']);
+            $viewData = [
+                'success' => 'If this email is registered, you will receive a reset link shortly.',
+            ];
+            if (!$emailSent) {
+                $viewData['delivery_warning'] = 'Email delivery is not configured on this server yet. Use the reset link below.';
+                $viewData['reset_url'] = $resetUrl;
+            }
+
+            $this->view('auth/forgot_password', $viewData);
+        } catch (\Throwable $e) {
+            error_log("Password reset request failed: " . $e->getMessage());
+            $this->view('auth/forgot_password', [
+                'error' => 'Unable to create a reset link right now. Please try again shortly.',
+            ]);
+        }
     }
 
     public function showResetPassword()
@@ -213,6 +233,19 @@ class AuthController extends Controller
         $token = $_GET['token'] ?? '';
         if (empty($token)) {
             $this->redirect('/login');
+            return;
+        }
+
+        $db = new \App\Config\Database();
+        $conn = $db->getConnection();
+        if ($conn === null) {
+            $this->view('auth/forgot_password', ['error' => 'Database unavailable. Please try again later.']);
+            return;
+        }
+
+        $this->ensurePasswordResetTable($conn);
+        if (!$this->findValidResetByToken($conn, $token)) {
+            $this->view('auth/forgot_password', ['error' => 'That reset link is invalid or has expired. Request a new one.']);
             return;
         }
 
@@ -229,14 +262,21 @@ class AuthController extends Controller
             $this->view('auth/reset_password', ['token' => $token, 'error' => 'Passwords must match and cannot be empty.']);
             return;
         }
+        if (strlen($password) < 8) {
+            $this->view('auth/reset_password', ['token' => $token, 'error' => 'Password must be at least 8 characters long.']);
+            return;
+        }
 
         $db = new \App\Config\Database();
         $conn = $db->getConnection();
+        if ($conn === null) {
+            $this->view('auth/reset_password', ['token' => $token, 'error' => 'Database unavailable. Please try again later.']);
+            return;
+        }
 
-        // Validate token (1 hour expiry)
-        $stmt = $conn->prepare("SELECT email FROM password_resets WHERE token = :token AND created_at >= DATE_SUB(NOW(), INTERVAL 1 HOUR) LIMIT 1");
-        $stmt->execute(['token' => $token]);
-        $reset = $stmt->fetch(\PDO::FETCH_ASSOC);
+        $this->ensurePasswordResetTable($conn);
+
+        $reset = $this->findValidResetByToken($conn, $token);
 
         if (!$reset) {
             $this->view('auth/reset_password', ['token' => $token, 'error' => 'Invalid or expired token. Please request a new link.']);
@@ -259,5 +299,38 @@ class AuthController extends Controller
         } else {
             $this->view('auth/reset_password', ['token' => $token, 'error' => 'Failed to reset password.']);
         }
+    }
+
+    private function buildResetUrl(string $token): string
+    {
+        $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+        $basePath = getenv('SAAS_BASE_PATH');
+        if ($basePath === false || $basePath === '') {
+            $basePath = '/saas';
+        }
+
+        return $scheme . '://' . $host . rtrim($basePath, '/') . '/reset-password?token=' . urlencode($token);
+    }
+
+    private function ensurePasswordResetTable(\PDO $conn): void
+    {
+        $conn->exec("
+            CREATE TABLE IF NOT EXISTS password_resets (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                email VARCHAR(255) NOT NULL,
+                token VARCHAR(64) NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ");
+    }
+
+    private function findValidResetByToken(\PDO $conn, string $token): ?array
+    {
+        $stmt = $conn->prepare("SELECT email FROM password_resets WHERE token = :token AND created_at >= DATE_SUB(NOW(), INTERVAL 1 HOUR) LIMIT 1");
+        $stmt->execute(['token' => $token]);
+        $reset = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+        return $reset ?: null;
     }
 }

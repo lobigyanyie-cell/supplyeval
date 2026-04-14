@@ -121,3 +121,10 @@ INSERT IGNORE INTO settings (setting_key, setting_value) VALUES
 ('smtp_from', 'noreply@suppliereval.com'),
 ('evaluation_service_url', ''),
 ('evaluation_service_fallback', '0');
+
+CREATE TABLE IF NOT EXISTS password_resets (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(255) NOT NULL,
+    token VARCHAR(64) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
