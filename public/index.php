@@ -97,6 +97,7 @@ $routes = [
         '/admin/companies/delete' => 'DashboardController@deleteCompany',
         '/admin/users/delete' => 'DashboardController@deleteUser',
         '/admin/settings/save' => 'DashboardController@saveSettings',
+        '/admin/settings/test-email' => 'DashboardController@sendTestEmail',
         '/users/create' => 'UserController@create',
         '/users/store' => 'UserController@store',
         '/users/delete' => 'UserController@delete',

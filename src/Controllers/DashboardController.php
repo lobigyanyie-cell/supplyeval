@@ -244,6 +244,33 @@ class DashboardController extends Controller
 
         $this->redirect('/admin/settings?saved=true');
     }
+
+    public function sendTestEmail()
+    {
+        $this->verifySystemAdmin();
+
+        $to = trim($_POST['test_email_to'] ?? '');
+        if ($to === '' || !filter_var($to, FILTER_VALIDATE_EMAIL)) {
+            $this->redirect('/admin/settings?test=invalid_email');
+            return;
+        }
+
+        $ok = \App\Services\EmailService::send(
+            $to,
+            'SupplierEval test email',
+            'This is a test email from your platform settings. If you can read this, your email provider is configured correctly.',
+            'Open Platform Settings',
+            (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' ? 'https' : 'http') . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . '/saas/admin/settings'
+        );
+
+        if ($ok) {
+            AuditLogger::log('Email Test Sent', 'To: ' . $to);
+            $this->redirect('/admin/settings?test=sent&to=' . rawurlencode($to));
+            return;
+        }
+
+        $this->redirect('/admin/settings?test=failed');
+    }
     public function suspendCompany()
     {
         $this->verifySystemAdmin();

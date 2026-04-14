@@ -15,6 +15,19 @@
             <span class="font-bold">Settings saved successfully!</span>
         </div>
     <?php endif; ?>
+    <?php if (($_GET['test'] ?? '') === 'sent'): ?>
+        <div class="bg-emerald-50 border border-emerald-100 text-emerald-700 px-6 py-4 rounded-2xl">
+            <span class="font-bold">Test email sent to <?= htmlspecialchars($_GET['to'] ?? '') ?>.</span>
+        </div>
+    <?php elseif (($_GET['test'] ?? '') === 'failed'): ?>
+        <div class="bg-rose-50 border border-rose-100 text-rose-700 px-6 py-4 rounded-2xl">
+            <span class="font-bold">Test email failed. Check your Brevo/SendGrid key and verified sender.</span>
+        </div>
+    <?php elseif (($_GET['test'] ?? '') === 'invalid_email'): ?>
+        <div class="bg-amber-50 border border-amber-100 text-amber-800 px-6 py-4 rounded-2xl">
+            <span class="font-bold">Please enter a valid test recipient email.</span>
+        </div>
+    <?php endif; ?>
 
     <form action="/saas/admin/settings/save" method="POST" class="space-y-6">
         <!-- Branding Section -->
@@ -168,6 +181,19 @@
                             value="<?= htmlspecialchars($settings['smtp_from'] ?? 'noreply@suppliereval.com') ?>"
                             class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium">
                         <p class="text-[10px] text-slate-400 font-bold uppercase tracking-tight">Must be verified in your Brevo or SendGrid sender settings</p>
+                    </div>
+                    <div class="pt-2">
+                        <label class="text-sm font-black text-slate-700">Send Test Email</label>
+                        <div class="mt-2 flex flex-col sm:flex-row gap-3">
+                            <input type="email" name="test_email_to" placeholder="you@example.com"
+                                class="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium">
+                            <button type="submit"
+                                formaction="/saas/admin/settings/test-email"
+                                formmethod="POST"
+                                class="px-5 py-3 bg-indigo-600 text-white rounded-xl font-black text-sm hover:bg-indigo-700 transition-colors">
+                                Send Test
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
