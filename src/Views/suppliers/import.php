@@ -1,4 +1,7 @@
-<?php ob_start(); ?>
+<?php ob_start();
+$plan_supplier_slots = $plan_supplier_slots ?? null;
+$plan_max_suppliers = $plan_max_suppliers ?? null;
+?>
 
 <div class="max-w-2xl mx-auto space-y-6">
     <div class="flex items-center justify-between">
@@ -31,6 +34,16 @@
             </div>
         </div>
     </div>
+
+    <?php if ($plan_max_suppliers !== null): ?>
+        <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+            Your plan allows up to <?= (int) $plan_max_suppliers ?> suppliers.
+            <?php if ($plan_supplier_slots !== null): ?>
+                <span class="text-slate-600"><?= (int) $plan_supplier_slots ?> slot<?= $plan_supplier_slots === 1 ? '' : 's' ?> available for new suppliers.</span>
+            <?php endif; ?>
+            Imports that would exceed this limit are rejected before any rows are saved.
+        </div>
+    <?php endif; ?>
 
     <?php if (isset($error)): ?>
         <div class="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-xl flex items-center gap-3">

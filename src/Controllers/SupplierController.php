@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Models\Supplier;
 use App\Models\Evaluation;
 use App\Services\AuditLogger;
+use App\Services\CompanyPlan;
 
 class SupplierController extends Controller
 {
@@ -21,7 +22,19 @@ class SupplierController extends Controller
         $stmt = $supplier->readAll($_SESSION['company_id']);
         $suppliers = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
-        $this->view('suppliers/index', ['suppliers' => $suppliers]);
+        $plan = CompanyPlan::current();
+        $maxSup = CompanyPlan::maxSuppliers($plan);
+        $db = new \App\Config\Database();
+        $conn = $db->getConnection();
+        $supplierCount = $conn ? CompanyPlan::supplierCount($conn, (int) $_SESSION['company_id']) : 0;
+
+        $this->view('suppliers/index', [
+            'suppliers' => $suppliers,
+            'plan_can_export' => CompanyPlan::canExport($plan),
+            'plan_supplier_slots' => $maxSup !== null ? max(0, $maxSup - $supplierCount) : null,
+            'plan_max_suppliers' => $maxSup,
+            'plan_notice' => $_GET['plan_notice'] ?? null,
+        ]);
     }
 
     public function create()
@@ -41,6 +54,20 @@ class SupplierController extends Controller
             return;
         }
         $this->enforceSubscription(); // Block write access
+
+        $db = new \App\Config\Database();
+        $conn = $db->getConnection();
+        $plan = CompanyPlan::current();
+        $maxSup = CompanyPlan::maxSuppliers($plan);
+        if ($conn !== null && $maxSup !== null) {
+            $cnt = CompanyPlan::supplierCount($conn, (int) $_SESSION['company_id']);
+            if ($cnt >= $maxSup) {
+                $this->view('suppliers/create', [
+                    'error' => "Your plan allows up to {$maxSup} suppliers. Upgrade to Professional for more.",
+                ]);
+                return;
+            }
+        }
 
         $supplier = new Supplier();
         $supplier->company_id = $_SESSION['company_id'];
@@ -233,10 +260,13 @@ class SupplierController extends Controller
             }
         }
 
+        $plan = CompanyPlan::current();
         $this->view('suppliers/rankings', [
             'rankedSuppliers' => $rankedSuppliers,
             'criteria' => $criteria,
-            'supplierBreakdowns' => $supplierBreakdowns
+            'supplierBreakdowns' => $supplierBreakdowns,
+            'plan_can_export' => CompanyPlan::canExport($plan),
+            'plan_notice' => $_GET['plan_notice'] ?? null,
         ]);
     }
 
@@ -244,6 +274,11 @@ class SupplierController extends Controller
     {
         if (!isset($_SESSION['user_id'])) {
             $this->redirect('/login');
+            return;
+        }
+
+        if (!CompanyPlan::canExport(CompanyPlan::current())) {
+            $this->redirect('/suppliers/rankings?plan_notice=export');
             return;
         }
 
@@ -369,6 +404,11 @@ class SupplierController extends Controller
         // Exporting might be considered a premium feature, let's block it for expired subs too
         $this->enforceSubscription();
 
+        if (!CompanyPlan::canExport(CompanyPlan::current())) {
+            $this->redirect('/suppliers?plan_notice=export');
+            return;
+        }
+
         $supplier = new Supplier();
         $stmt = $supplier->readAll($_SESSION['company_id']);
         $suppliers = $stmt->fetchAll(\PDO::FETCH_ASSOC);
@@ -399,6 +439,11 @@ class SupplierController extends Controller
     {
         if (!isset($_SESSION['user_id'])) {
             $this->redirect('/login');
+            return;
+        }
+
+        if (!CompanyPlan::canExport(CompanyPlan::current())) {
+            $this->redirect('/suppliers/rankings?plan_notice=export');
             return;
         }
 
@@ -485,7 +530,7 @@ class SupplierController extends Controller
             $this->redirect('/login');
             return;
         }
-        $this->view('suppliers/import');
+        $this->view('suppliers/import', $this->importPlanContext());
     }
 
     public function downloadTemplate()
@@ -515,7 +560,7 @@ class SupplierController extends Controller
         $this->enforceSubscription();
 
         if (!isset($_FILES['csv_file']) || $_FILES['csv_file']['error'] !== UPLOAD_ERR_OK) {
-            $this->view('suppliers/import', ['error' => 'Please select a valid CSV file.']);
+            $this->view('suppliers/import', array_merge($this->importPlanContext(), ['error' => 'Please select a valid CSV file.']));
             return;
         }
 
@@ -525,7 +570,7 @@ class SupplierController extends Controller
         // Parse headers dynamically
         $headers = fgetcsv($handle);
         if (!$headers) {
-            $this->view('suppliers/import', ['error' => 'The CSV file appears to be empty.']);
+            $this->view('suppliers/import', array_merge($this->importPlanContext(), ['error' => 'The CSV file appears to be empty.']));
             return;
         }
 
@@ -559,11 +604,17 @@ class SupplierController extends Controller
         if (!isset($indices['name']) || !isset($indices['email'])) {
             fclose($handle);
             $missing = !isset($indices['name']) ? 'Name (or Supplier Name)' : 'Email';
-            $this->view('suppliers/import', [
-                'error' => "Required column '$missing' not found in your CSV. Please check your headers."
-            ]);
+            $this->view('suppliers/import', array_merge($this->importPlanContext(), [
+                'error' => "Required column '$missing' not found in your CSV. Please check your headers.",
+            ]));
             return;
         }
+
+        $rowBuffer = [];
+        while (($data = fgetcsv($handle)) !== false) {
+            $rowBuffer[] = $data;
+        }
+        fclose($handle);
 
         $importedCount = 0;
         $skippedCount = 0;
@@ -571,12 +622,53 @@ class SupplierController extends Controller
 
         $db = new \App\Config\Database();
         $conn = $db->getConnection();
+        if ($conn === null) {
+            $this->view('suppliers/import', array_merge($this->importPlanContext(), ['error' => 'Database unavailable.']));
+            return;
+        }
+
+        $plan = CompanyPlan::current();
+        $maxSup = CompanyPlan::maxSuppliers($plan);
+        $wouldAdd = 0;
+        $seenEmails = [];
+        foreach ($rowBuffer as $data) {
+            if (empty(array_filter($data))) {
+                continue;
+            }
+            $name = trim($data[$indices['name']] ?? '');
+            $email = strtolower(trim($data[$indices['email']] ?? ''));
+            if ($name === '' || $email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                continue;
+            }
+            if (isset($seenEmails[$email])) {
+                continue;
+            }
+            $stmt = $conn->prepare('SELECT id FROM suppliers WHERE email = :email AND company_id = :cid');
+            $stmt->execute(['email' => $email, 'cid' => $company_id]);
+            if ($stmt->fetch()) {
+                continue;
+            }
+            $seenEmails[$email] = true;
+            $wouldAdd++;
+        }
+
+        if ($maxSup !== null) {
+            $cnt = CompanyPlan::supplierCount($conn, (int) $company_id);
+            if ($cnt + $wouldAdd > $maxSup) {
+                $this->view('suppliers/import', array_merge($this->importPlanContext(), [
+                    'error' => "This import would exceed your plan limit of {$maxSup} suppliers (you have {$cnt}; the file would add {$wouldAdd} new). Reduce rows or upgrade.",
+                ]));
+                return;
+            }
+        }
+
         $conn->beginTransaction();
 
         try {
-            while (($data = fgetcsv($handle)) !== FALSE) {
-                if (empty(array_filter($data)))
+            foreach ($rowBuffer as $data) {
+                if (empty(array_filter($data))) {
                     continue;
+                }
 
                 $name = trim($data[$indices['name']] ?? '');
                 $email = trim($data[$indices['email']] ?? '');
@@ -584,13 +676,11 @@ class SupplierController extends Controller
                 $phone = isset($indices['phone']) ? trim($data[$indices['phone']] ?? '') : '';
                 $address = isset($indices['address']) ? trim($data[$indices['address']] ?? '') : '';
 
-                // Validation
                 if (empty($name) || empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
                     $skippedCount++;
                     continue;
                 }
 
-                // Check for duplicate within company
                 $stmt = $conn->prepare("SELECT id FROM suppliers WHERE email = :email AND company_id = :cid");
                 $stmt->execute(['email' => $email, 'cid' => $company_id]);
                 if ($stmt->fetch()) {
@@ -614,7 +704,6 @@ class SupplierController extends Controller
             }
 
             $conn->commit();
-            fclose($handle);
 
             $msg = "Successfully imported $importedCount suppliers.";
             if ($skippedCount > 0) {
@@ -623,13 +712,10 @@ class SupplierController extends Controller
 
             AuditLogger::log("Bulk Import Completed", "Imported: $importedCount, Skipped: $skippedCount");
 
-            $this->view('suppliers/import', ['success' => $msg]);
-
+            $this->view('suppliers/import', array_merge($this->importPlanContext(), ['success' => $msg]));
         } catch (\Exception $e) {
             $conn->rollBack();
-            if ($handle)
-                fclose($handle);
-            $this->view('suppliers/import', ['error' => 'Import failed: ' . $e->getMessage()]);
+            $this->view('suppliers/import', array_merge($this->importPlanContext(), ['error' => 'Import failed: ' . $e->getMessage()]));
         }
     }
 
@@ -707,5 +793,22 @@ class SupplierController extends Controller
 
         $supplier->delete();
         $this->redirect('/suppliers');
+    }
+
+    /**
+     * @return array{plan_supplier_slots: int|null, plan_max_suppliers: int|null}
+     */
+    private function importPlanContext(): array
+    {
+        $plan = CompanyPlan::current();
+        $maxSup = CompanyPlan::maxSuppliers($plan);
+        $db = new \App\Config\Database();
+        $conn = $db->getConnection();
+        $supplierCount = $conn ? CompanyPlan::supplierCount($conn, (int) $_SESSION['company_id']) : 0;
+
+        return [
+            'plan_supplier_slots' => $maxSup !== null ? max(0, $maxSup - $supplierCount) : null,
+            'plan_max_suppliers' => $maxSup,
+        ];
     }
 }

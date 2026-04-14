@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Models\Criteria;
 use App\Services\AuditLogger;
+use App\Services\CompanyPlan;
 
 class CriteriaController extends Controller
 {
@@ -31,7 +32,15 @@ class CriteriaController extends Controller
         }
         $this->enforceSubscription(); // Block access for expired subscriptions
 
-        $this->view('criteria/create');
+        $db = new \App\Config\Database();
+        $conn = $db->getConnection();
+        $plan = CompanyPlan::current();
+        $maxC = CompanyPlan::maxCriteria($plan);
+        $cc = $conn ? CompanyPlan::criteriaCount($conn, (int) $_SESSION['company_id']) : 0;
+        $this->view('criteria/create', [
+            'criteria_slots_remaining' => $maxC !== null ? max(0, $maxC - $cc) : null,
+            'plan_max_criteria' => $maxC,
+        ]);
     }
 
     public function store()
@@ -42,27 +51,44 @@ class CriteriaController extends Controller
         }
         $this->enforceSubscription();
 
+        $plan = CompanyPlan::current();
+        $maxC = CompanyPlan::maxCriteria($plan);
+        $db = new \App\Config\Database();
+        $conn = $db->getConnection();
+        $cc = $conn ? CompanyPlan::criteriaCount($conn, (int) $_SESSION['company_id']) : 0;
+        $planCtx = [
+            'criteria_slots_remaining' => $maxC !== null ? max(0, $maxC - $cc) : null,
+            'plan_max_criteria' => $maxC,
+        ];
+        if ($conn !== null && $maxC !== null && $cc >= $maxC) {
+            $this->view('criteria/create', array_merge($planCtx, [
+                'error' => "Your plan allows up to {$maxC} criteria. Upgrade to Professional for unlimited criteria.",
+                'criteria_slots_remaining' => 0,
+            ]));
+            return;
+        }
+
         $criteria = new Criteria();
         $weight = (float) ($_POST['weight'] ?? 0);
         $totalWeight = $criteria->getTotalWeight($_SESSION['company_id']);
 
         if (($totalWeight + $weight) > 100) {
             $error = "Total weight cannot exceed 100%. (Current: {$totalWeight}%, adding: {$weight}%)";
-            $this->view('criteria/create', ['error' => $error, 'old' => $_POST]);
+            $this->view('criteria/create', array_merge($planCtx, ['error' => $error, 'old' => $_POST]));
             return;
         }
 
         $criteria->company_id = $_SESSION['company_id'];
         $criteria->name = trim($_POST['name'] ?? '');
         if ($criteria->name === '') {
-            $this->view('criteria/create', ['error' => 'Criteria name is required.', 'old' => $_POST]);
+            $this->view('criteria/create', array_merge($planCtx, ['error' => 'Criteria name is required.', 'old' => $_POST]));
             return;
         }
         if ($criteria->nameExistsForCompany($_SESSION['company_id'], $criteria->name)) {
-            $this->view('criteria/create', [
+            $this->view('criteria/create', array_merge($planCtx, [
                 'error' => 'A criterion with this name already exists. Use a different name.',
                 'old' => $_POST,
-            ]);
+            ]));
             return;
         }
         $criteria->weight = $weight;
@@ -72,7 +98,7 @@ class CriteriaController extends Controller
             AuditLogger::log("Criteria Created", "Name: " . $criteria->name . ", Weight: " . $criteria->weight . "%");
             $this->redirect('/criteria');
         } else {
-            $this->view('criteria/create', ['error' => 'Failed to create criteria.']);
+            $this->view('criteria/create', array_merge($planCtx, ['error' => 'Failed to create criteria.']));
         }
     }
 

@@ -32,7 +32,7 @@ $proPlanPricing = $proPlanPricing ?? \App\Helpers\PricingDisplay::formatMonthly(
             </p>
             <div class="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in-up"
                 style="animation-delay: 0.3s;">
-                <a href="/saas/register"
+                <a href="/saas/register?plan=starter"
                     class="inline-flex justify-center items-center px-8 py-4 text-base font-semibold text-white bg-slate-900 rounded-full hover:bg-slate-800 transition-all hover:shadow-lg transform hover:-translate-y-1">
                     Start 3-Month Free Trial
                     <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -681,7 +681,7 @@ $proPlanPricing = $proPlanPricing ?? \App\Helpers\PricingDisplay::formatMonthly(
                         <span class="text-slate-600 text-sm">1 Admin User</span>
                     </li>
                 </ul>
-                <a href="/saas/register"
+                <a href="/saas/register?plan=starter"
                     class="w-full block text-center py-3 px-4 border border-brand-200 rounded-xl text-brand-700 font-semibold hover:bg-brand-50 transition-colors">
                     Start Trial
                 </a>
@@ -746,7 +746,7 @@ $proPlanPricing = $proPlanPricing ?? \App\Helpers\PricingDisplay::formatMonthly(
                         <span class="text-slate-300 text-sm">Priority Support</span>
                     </li>
                 </ul>
-                <a href="/saas/register"
+                <a href="/saas/register?plan=professional"
                     class="w-full block text-center py-3 px-4 bg-brand-600 rounded-xl text-white font-semibold hover:bg-brand-500 transition-colors shadow-lg shadow-brand-500/30">
                     Get Started
                 </a>
@@ -796,9 +796,9 @@ $proPlanPricing = $proPlanPricing ?? \App\Helpers\PricingDisplay::formatMonthly(
                         <span class="text-slate-600 text-sm">SSO Integration</span>
                     </li>
                 </ul>
-                <a href="#"
+                <a href="/saas/register?plan=enterprise"
                     class="w-full block text-center py-3 px-4 border border-slate-200 rounded-xl text-slate-700 font-semibold hover:bg-slate-50 transition-colors">
-                    Contact Sales
+                    Start Enterprise Trial
                 </a>
             </div>
         </div>
@@ -910,7 +910,7 @@ $proPlanPricing = $proPlanPricing ?? \App\Helpers\PricingDisplay::formatMonthly(
                     Join over 500+ companies using SupplierEval to streamline their decision-making process. Start your
                     3-month free trial today.
                 </p>
-                <a href="/saas/register"
+                <a href="/saas/register?plan=professional"
                     class="inline-flex justify-center items-center px-10 py-5 text-lg font-bold text-slate-900 bg-white rounded-full hover:bg-brand-50 transition-all hover:shadow-[0_0_40px_-10px_rgba(255,255,255,0.3)] transform hover:-translate-y-1">
                     Get Started for Free
                 </a>

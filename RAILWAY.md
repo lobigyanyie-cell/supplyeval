@@ -43,6 +43,14 @@ php public/migrate_evaluation_workflow.php
 
 Or execute **`sql/migrate_evaluations_workflow.sql`** in the MySQL console (skip if `status` already exists).
 
+**Missing `companies.plan` (plan tiers)?** Run once:
+
+```bash
+php public/migrate_company_plan.php
+```
+
+Or execute **`sql/migrate_company_plan.sql`** in the MySQL console (skip if the column already exists).
+
 ## 5. Open the app
 
 Your public URL will look like:

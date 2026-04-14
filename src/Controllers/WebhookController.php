@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Config\Database;
 use App\Config\Paystack;
+use App\Services\CompanyPlan;
 
 class WebhookController extends Controller
 {
@@ -54,6 +55,8 @@ class WebhookController extends Controller
                     $stmt->bindParam(':amount', $amount);
                     $stmt->bindParam(':tx_id', $reference);
                     $stmt->execute();
+
+                    CompanyPlan::applyPaidUpgrade($conn, (int) $company_id);
                 }
             }
         }

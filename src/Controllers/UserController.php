@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Models\User;
+use App\Services\CompanyPlan;
 
 class UserController extends Controller
 {
@@ -33,7 +34,15 @@ class UserController extends Controller
         }
         $this->enforceSubscription(); // Adding users is a write action
 
-        $this->view('users/create');
+        $db = new \App\Config\Database();
+        $conn = $db->getConnection();
+        $plan = CompanyPlan::current();
+        $maxU = CompanyPlan::maxUsers($plan);
+        $uc = $conn ? CompanyPlan::userCount($conn, (int) $_SESSION['company_id']) : 0;
+        $this->view('users/create', [
+            'user_slots_remaining' => $maxU !== null ? max(0, $maxU - $uc) : null,
+            'plan_max_users' => $maxU,
+        ]);
     }
 
     public function store()
@@ -44,13 +53,35 @@ class UserController extends Controller
         }
         $this->enforceSubscription();
 
+        $db = new \App\Config\Database();
+        $conn = $db->getConnection();
+        $plan = CompanyPlan::current();
+        $maxU = CompanyPlan::maxUsers($plan);
+        $uc = $conn ? CompanyPlan::userCount($conn, (int) $_SESSION['company_id']) : 0;
+        $userCtx = [
+            'user_slots_remaining' => $maxU !== null ? max(0, $maxU - $uc) : null,
+            'plan_max_users' => $maxU,
+        ];
+        if ($conn !== null && $maxU !== null && $uc >= $maxU) {
+            $this->view('users/create', array_merge($userCtx, [
+                'error' => "Your plan allows up to {$maxU} team member(s). Upgrade to add more users.",
+                'user_slots_remaining' => 0,
+            ]));
+            return;
+        }
+
         $name = $_POST['name'] ?? '';
         $email = $_POST['email'] ?? '';
         $password = $_POST['password'] ?? '';
         $role = $_POST['role'] ?? 'evaluator'; // Default to evaluator for invited users
 
         if (empty($name) || empty($email) || empty($password)) {
-            $this->view('users/create', ['error' => 'All fields are required.']);
+            $this->view('users/create', array_merge($userCtx, ['error' => 'All fields are required.']));
+            return;
+        }
+
+        if ($conn === null) {
+            $this->view('users/create', array_merge($userCtx, ['error' => 'Database unavailable.']));
             return;
         }
 
@@ -61,13 +92,11 @@ class UserController extends Controller
         // Looking at User.php earlier, it has create() but maybe not exists check public.
         // Let's rely on database unique constraint or check manually.
 
-        $db = new \App\Config\Database();
-        $conn = $db->getConnection();
         $stmt = $conn->prepare("SELECT id FROM users WHERE email = :email");
         $stmt->bindParam(':email', $email);
         $stmt->execute();
         if ($stmt->fetch()) {
-            $this->view('users/create', ['error' => 'Email already registered.']);
+            $this->view('users/create', array_merge($userCtx, ['error' => 'Email already registered.']));
             return;
         }
 
@@ -94,7 +123,7 @@ class UserController extends Controller
 
             $this->redirect('/users');
         } else {
-            $this->view('users/create', ['error' => 'Failed to create user.']);
+            $this->view('users/create', array_merge($userCtx, ['error' => 'Failed to create user.']));
         }
     }
 

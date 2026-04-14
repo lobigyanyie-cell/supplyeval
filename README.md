@@ -40,6 +40,7 @@ A production-ready, multi-tenant Supplier Evaluation & Decision Support System b
    - Fresh installs using `sql/schema.sql` include a `settings` table with defaults.
    - If you upgrade an older database, run once: `php public/migrate_settings.php`
    - System Admin can set the **evaluation scoring service** base URL and fallback in **Platform Settings** (or use `EVALUATION_SERVICE_URL` / `EVALUATION_SERVICE_FALLBACK` in the environment).
+   - **Plan tiers** (Starter / Professional / Enterprise on `companies.plan`): if your database predates this column, run once: `php public/migrate_company_plan.php` (or apply `sql/migrate_company_plan.sql`). New installs from `sql/schema.sql` already include it.
 
 4. **Configure Web Server:**
    - Point your web server's document root to the `public/` directory.
@@ -81,7 +82,7 @@ Deploy using the root **`Dockerfile`**. Add Railway’s **MySQL** plugin and lin
 
 Full steps: **[RAILWAY.md](RAILWAY.md)**. App URL pattern: `https://<your-app>.up.railway.app/saas/login`
 
-Existing Railway/MySQL data from an older schema: run **`php public/migrate_evaluation_workflow.php`** once so evaluations support **draft/submit** and the **workflow audit** table exists.
+Existing Railway/MySQL data from an older schema: run **`php public/migrate_evaluation_workflow.php`** once so evaluations support **draft/submit** and the **workflow audit** table exists. If `companies.plan` is missing, run **`php public/migrate_company_plan.php`** once (or see **`sql/migrate_company_plan.sql`**).
 
 ## Directory Structure
 - `public/`: Entry point (`index.php`) and assets.

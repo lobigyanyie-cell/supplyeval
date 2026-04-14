@@ -1,4 +1,7 @@
-<?php ob_start(); ?>
+<?php ob_start();
+$user_slots_remaining = $user_slots_remaining ?? null;
+$plan_max_users = $plan_max_users ?? null;
+?>
 
 <div class="space-y-6">
     <div class="flex items-center justify-between">
@@ -10,6 +13,24 @@
             ← Back to Team
         </a>
     </div>
+
+    <?php if (isset($error)): ?>
+        <div class="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
+            <?= htmlspecialchars($error) ?>
+        </div>
+    <?php endif; ?>
+
+    <?php if ($plan_max_users !== null): ?>
+        <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+            Your plan allows up to <?= (int) $plan_max_users ?> team member<?= (int) $plan_max_users === 1 ? '' : 's' ?>.
+            <?php if ($user_slots_remaining !== null && $user_slots_remaining <= 0): ?>
+                <span class="font-semibold text-rose-700">You cannot add more users without upgrading.</span>
+            <?php elseif ($user_slots_remaining !== null): ?>
+                <span class="text-slate-600">You have <?= (int) $user_slots_remaining ?> slot<?= $user_slots_remaining === 1 ? '' : 's' ?> left.</span>
+            <?php endif; ?>
+            <a href="/saas/subscription/upgrade" class="font-semibold text-brand-700 hover:text-brand-800 ml-1">Upgrade</a>
+        </div>
+    <?php endif; ?>
 
     <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
         <div class="px-6 py-5 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-slate-100">

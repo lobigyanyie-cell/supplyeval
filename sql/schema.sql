@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS companies (
     name VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL UNIQUE,
     subscription_status ENUM('active', 'inactive', 'trial') DEFAULT 'trial',
+    plan ENUM('starter', 'professional', 'enterprise') NOT NULL DEFAULT 'starter',
     trial_ends_at DATETIME,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP

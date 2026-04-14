@@ -5,13 +5,15 @@ namespace App\Controllers;
 use App\Models\User;
 use App\Models\Company;
 use App\Services\AuditLogger;
+use App\Services\CompanyPlan;
 
 class AuthController extends Controller
 {
 
     public function showRegister()
     {
-        $this->view('auth/register');
+        $selected_plan = CompanyPlan::normalize($_GET['plan'] ?? 'starter');
+        $this->view('auth/register', ['selected_plan' => $selected_plan]);
     }
 
     public function register()
@@ -21,9 +23,13 @@ class AuthController extends Controller
         $user_name = $_POST['name'] ?? '';
         $email = $_POST['email'] ?? '';
         $password = $_POST['password'] ?? '';
+        $plan = CompanyPlan::normalize($_POST['plan'] ?? 'starter');
 
         if (empty($company_name) || empty($user_name) || empty($email) || empty($password)) {
-            $this->view('auth/register', ['error' => 'All fields are required.']);
+            $this->view('auth/register', [
+                'error' => 'All fields are required.',
+                'selected_plan' => $plan,
+            ]);
             return;
         }
 
@@ -35,7 +41,10 @@ class AuthController extends Controller
 
         $user = new User();
         if ($user->emailExists($email)) {
-            $this->view('auth/register', ['error' => 'Email already registered.']);
+            $this->view('auth/register', [
+                'error' => 'Email already registered.',
+                'selected_plan' => $plan,
+            ]);
             return;
         }
 
@@ -49,6 +58,7 @@ class AuthController extends Controller
             $company->name = $company_name;
             $company->email = $email;
             $company->subscription_status = 'trial';
+            $company->plan = $plan;
             $company->trial_ends_at = date('Y-m-d H:i:s', strtotime('+3 months'));
 
             if (!$company->create()) {
@@ -81,7 +91,10 @@ class AuthController extends Controller
             $conn->rollBack();
             // Log the error for debugging
             error_log("Registration Error: " . $e->getMessage());
-            $this->view('auth/register', ['error' => 'Registration failed: ' . $e->getMessage()]);
+            $this->view('auth/register', [
+                'error' => 'Registration failed: ' . $e->getMessage(),
+                'selected_plan' => $plan,
+            ]);
         }
     }
 
@@ -115,7 +128,7 @@ class AuthController extends Controller
             if ($loggedInUser['company_id']) {
                 $db = new \App\Config\Database();
                 $conn = $db->getConnection();
-                $stmt = $conn->prepare("SELECT account_status FROM companies WHERE id = :id");
+                $stmt = $conn->prepare("SELECT account_status, plan FROM companies WHERE id = :id");
                 $stmt->bindParam(':id', $loggedInUser['company_id']);
                 $stmt->execute();
                 $company = $stmt->fetch(\PDO::FETCH_ASSOC);
@@ -124,6 +137,9 @@ class AuthController extends Controller
                     $this->view('auth/login', ['error' => 'Your account has been suspended. Please contact support.']);
                     return;
                 }
+                if ($company) {
+                    $_SESSION['company_plan'] = CompanyPlan::normalize($company['plan'] ?? 'professional');
+                }
             }
 
             $_SESSION['user_id'] = $loggedInUser['id'];
@@ -131,6 +147,9 @@ class AuthController extends Controller
             $_SESSION['role'] = $loggedInUser['role'];
             $_SESSION['name'] = $loggedInUser['name'];
             $_SESSION['email'] = $loggedInUser['email'];
+            if (empty($loggedInUser['company_id'])) {
+                unset($_SESSION['company_plan']);
+            }
 
             AuditLogger::log("Login Success");
             $this->redirect('/dashboard');

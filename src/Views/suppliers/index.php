@@ -1,10 +1,20 @@
-<?php ob_start(); ?>
+<?php ob_start();
+$plan_can_export = $plan_can_export ?? true;
+$plan_notice = $plan_notice ?? null;
+$plan_supplier_slots = $plan_supplier_slots ?? null;
+$plan_max_suppliers = $plan_max_suppliers ?? null;
+?>
 
 <div class="bg-white rounded-2xl shadow-sm border border-slate-200">
     <div class="p-6 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
             <h2 class="text-xl font-bold text-slate-800">Suppliers</h2>
             <p class="text-sm text-slate-500">Manage your supplier relationships and evaluations.</p>
+            <?php if ($plan_max_suppliers !== null): ?>
+                <p class="text-xs text-slate-500 mt-1">
+                    <?= (int) $plan_supplier_slots ?> of <?= (int) $plan_max_suppliers ?> supplier slots remaining on your plan.
+                </p>
+            <?php endif; ?>
         </div>
         <div class="flex gap-3">
             <a href="/saas/suppliers/rankings"
@@ -16,14 +26,19 @@
                 </svg>
                 View Rankings
             </a>
-            <a href="/saas/suppliers/export"
-                class="inline-flex items-center px-4 py-2 border border-slate-300 text-sm font-medium rounded-lg text-slate-700 bg-white hover:bg-slate-50 transition-colors">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-                </svg>
-                Export CSV
-            </a>
+            <?php if ($plan_can_export): ?>
+                <a href="/saas/suppliers/export"
+                    class="inline-flex items-center px-4 py-2 border border-slate-300 text-sm font-medium rounded-lg text-slate-700 bg-white hover:bg-slate-50 transition-colors">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                    </svg>
+                    Export CSV
+                </a>
+            <?php else: ?>
+                <span class="inline-flex items-center px-4 py-2 border border-slate-200 text-sm font-medium rounded-lg text-slate-400 bg-slate-50 cursor-not-allowed"
+                    title="Upgrade to export">Export CSV</span>
+            <?php endif; ?>
             <div class="flex items-center gap-3">
                 <a href="/saas/suppliers/import"
                     class="bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 px-6 py-3 rounded-xl font-black uppercase tracking-widest text-xs flex items-center gap-2 transition-all">
@@ -43,6 +58,13 @@
             </div>
         </div>
     </div>
+
+    <?php if ($plan_notice === 'export'): ?>
+        <div class="mx-6 mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            CSV export is available on Professional and Enterprise.
+            <a href="/saas/subscription/upgrade" class="font-semibold text-amber-950 underline ml-1">Upgrade your plan</a>
+        </div>
+    <?php endif; ?>
 
     <div class="overflow-x-auto">
         <table class="min-w-full divide-y divide-slate-200">

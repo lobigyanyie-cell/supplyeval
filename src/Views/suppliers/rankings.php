@@ -1,4 +1,7 @@
-<?php ob_start(); ?>
+<?php ob_start();
+$plan_can_export = $plan_can_export ?? true;
+$plan_notice = $plan_notice ?? null;
+?>
 
 <style>
     /* Fade-in animations */
@@ -136,34 +139,48 @@
             <h1 class="text-2xl font-bold text-slate-900">Supplier Rankings</h1>
             <p class="text-sm text-slate-600 mt-1">Compare supplier performance based on evaluations</p>
         </div>
-        <div class="flex items-center gap-3">
-            <a href="/saas/suppliers/rankings/export" onclick="showExportLoading(event)"
-                class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-medium transition-all duration-300 shadow-sm hover:shadow-md flex items-center gap-2 transform hover:scale-105">
-                <svg class="w-5 h-5 export-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-                </svg>
-                <span class="spinner hidden"></span>
-                <span class="export-text">Export CSV</span>
-            </a>
-            <a href="/saas/suppliers/rankings/report" target="_blank"
-                class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-medium transition-all duration-300 shadow-sm hover:shadow-md flex items-center gap-2 transform hover:scale-105">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M9 17v-2a4 4 0 10-8 0v2l8-2zm12-2v2a3 3 0 01-3 3H7a3 3 0 01-3-3v-2m8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z">
-                    </path>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z">
-                    </path>
-                </svg>
-                <span>Print Report</span>
-            </a>
+        <div class="flex items-center gap-3 flex-wrap">
+            <?php if ($plan_can_export): ?>
+                <a href="/saas/suppliers/rankings/export" onclick="showExportLoading(event)"
+                    class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-medium transition-all duration-300 shadow-sm hover:shadow-md flex items-center gap-2 transform hover:scale-105">
+                    <svg class="w-5 h-5 export-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                    </svg>
+                    <span class="spinner hidden"></span>
+                    <span class="export-text">Export CSV</span>
+                </a>
+                <a href="/saas/suppliers/rankings/report" target="_blank"
+                    class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-medium transition-all duration-300 shadow-sm hover:shadow-md flex items-center gap-2 transform hover:scale-105">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 17v-2a4 4 0 10-8 0v2l8-2zm12-2v2a3 3 0 01-3 3H7a3 3 0 01-3-3v-2m8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z">
+                        </path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z">
+                        </path>
+                    </svg>
+                    <span>Print Report</span>
+                </a>
+            <?php else: ?>
+                <span class="bg-slate-200 text-slate-500 px-4 py-2 rounded-lg text-sm font-medium cursor-not-allowed"
+                    title="Upgrade to export">Export CSV</span>
+                <span class="bg-slate-200 text-slate-500 px-4 py-2 rounded-lg text-sm font-medium cursor-not-allowed"
+                    title="Upgrade for printable report">Print Report</span>
+            <?php endif; ?>
             <a href="/saas/suppliers"
                 class="text-sm text-indigo-600 hover:text-indigo-700 font-medium transition-colors">
                 ← Back to Suppliers
             </a>
         </div>
     </div>
+
+    <?php if ($plan_notice === 'export'): ?>
+        <div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 animate-fade-in">
+            Export and printable reports are included on Professional and Enterprise.
+            <a href="/saas/subscription/upgrade" class="font-semibold text-amber-950 underline ml-1">Upgrade your plan</a>
+        </div>
+    <?php endif; ?>
 
     <?php if (isset($_GET['alert_triggered'])): ?>
         <div class="bg-indigo-50 border-l-4 border-indigo-500 p-4 mb-6 rounded-r-xl shadow-sm animate-fade-in">

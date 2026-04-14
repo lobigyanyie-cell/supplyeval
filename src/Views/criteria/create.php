@@ -1,4 +1,7 @@
-<?php ob_start(); ?>
+<?php ob_start();
+$criteria_slots_remaining = $criteria_slots_remaining ?? null;
+$plan_max_criteria = $plan_max_criteria ?? null;
+?>
 
 <div class="max-w-2xl mx-auto space-y-6">
     <div class="flex items-center justify-between">
@@ -7,6 +10,16 @@
             <p class="text-sm text-slate-600 mt-1">Define a new criterion for supplier evaluation</p>
         </div>
     </div>
+
+    <?php if ($plan_max_criteria !== null): ?>
+        <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+            Starter plan: up to <?= (int) $plan_max_criteria ?> criteria.
+            <?php if ($criteria_slots_remaining !== null): ?>
+                <span class="text-slate-600"><?= (int) $criteria_slots_remaining ?> remaining.</span>
+            <?php endif; ?>
+            <a href="/saas/subscription/upgrade" class="font-semibold text-brand-700 hover:text-brand-800 ml-1">Upgrade for unlimited</a>
+        </div>
+    <?php endif; ?>
 
     <?php if (isset($error)): ?>
         <div

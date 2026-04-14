@@ -1,4 +1,7 @@
-<?php ob_start(); ?>
+<?php ob_start();
+$selected_plan = $selected_plan ?? 'starter';
+$plan_label = \App\Services\CompanyPlan::label($selected_plan);
+?>
 
 <div class="min-h-screen relative overflow-hidden bg-white flex flex-col justify-center py-12 sm:px-6 lg:px-8">
     <!-- Background Decor to match landing page & login -->
@@ -26,6 +29,9 @@
             <h2 class="text-3xl font-extrabold text-slate-900">
                 Join our platform
             </h2>
+            <p class="mt-3 inline-flex items-center gap-2 rounded-full bg-brand-50 border border-brand-100 px-3 py-1 text-xs font-semibold text-brand-800">
+                Plan: <?= htmlspecialchars($plan_label) ?>
+            </p>
             <p class="mt-2 text-sm text-slate-600">
                 Already have an account?
                 <a href="/saas/login" class="font-semibold text-brand-600 hover:text-brand-500 transition-colors">
@@ -57,6 +63,7 @@
             <?php endif; ?>
 
             <form action="/saas/register" method="POST" class="space-y-4">
+                <input type="hidden" name="plan" value="<?= htmlspecialchars($selected_plan) ?>">
                 <div>
                     <label for="company_name" class="block text-sm font-semibold text-slate-700">
                         Company Name

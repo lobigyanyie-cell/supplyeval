@@ -14,6 +14,8 @@ class Company
     public $name;
     public $email;
     public $subscription_status;
+    /** @var 'starter'|'professional'|'enterprise'|string */
+    public $plan = 'starter';
     public $trial_ends_at;
 
     public function __construct()
@@ -25,8 +27,8 @@ class Company
     public function create()
     {
         $query = "INSERT INTO " . $this->table_name . " 
-                (name, email, subscription_status, trial_ends_at) 
-                VALUES (:name, :email, :subscription_status, :trial_ends_at)";
+                (name, email, subscription_status, plan, trial_ends_at) 
+                VALUES (:name, :email, :subscription_status, :plan, :trial_ends_at)";
 
         $stmt = $this->conn->prepare($query);
 
@@ -38,6 +40,7 @@ class Company
         $stmt->bindParam(":name", $this->name);
         $stmt->bindParam(":email", $this->email);
         $stmt->bindParam(":subscription_status", $this->subscription_status);
+        $stmt->bindParam(":plan", $this->plan);
         $stmt->bindParam(":trial_ends_at", $this->trial_ends_at);
 
         if ($stmt->execute()) {

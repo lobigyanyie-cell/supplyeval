@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Config\Database;
 use App\Services\AuditLogger;
+use App\Services\CompanyPlan;
 
 class SubscriptionController extends Controller
 {
@@ -71,6 +72,8 @@ class SubscriptionController extends Controller
             $stmt->bindParam(":end_date", $new_end_date);
             $stmt->bindParam(":id", $company_id);
             $stmt->execute();
+
+            CompanyPlan::applyPaidUpgrade($conn, (int) $company_id);
 
             // 2. Log Transaction
             $stmt = $conn->prepare("INSERT INTO transactions (company_id, amount, status, transaction_id) VALUES (:cid, :amount, 'succeeded', :tx_id)");
