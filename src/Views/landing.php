@@ -1,4 +1,7 @@
-<?php ob_start(); ?>
+<?php ob_start();
+/** @var array $proPlanPricing from HomeController */
+$proPlanPricing = $proPlanPricing ?? \App\Helpers\PricingDisplay::formatMonthly(\App\Config\Settings::get('premium_price', '350'));
+?>
 
 <!-- Hero Section -->
 <div class="relative overflow-hidden bg-white">
@@ -634,9 +637,15 @@
                     <h3 class="text-lg font-bold text-slate-900">Starter</h3>
                     <p class="text-slate-500 text-sm mt-1">For small teams just getting started.</p>
                 </div>
-                <div class="mb-6">
-                    <span class="text-4xl font-bold text-slate-900">$29</span>
-                    <span class="text-slate-500">/mo</span>
+                <div class="mb-6 space-y-2">
+                    <div>
+                        <span class="text-4xl font-bold text-slate-900">Free</span>
+                        <span class="text-slate-500 text-lg font-medium">/trial</span>
+                    </div>
+                    <p class="text-xs text-slate-500 leading-relaxed">
+                        Then <span class="font-semibold text-slate-700"><?= htmlspecialchars($proPlanPricing['usd_per_month']) ?></span>
+                        <span class="block mt-1.5 text-slate-400"><?= htmlspecialchars($proPlanPricing['ghs_billed_line']) ?></span>
+                    </p>
                 </div>
                 <ul class="space-y-4 mb-8 flex-1">
                     <li class="flex items-start">
@@ -689,9 +698,11 @@
                     <h3 class="text-lg font-bold text-white">Professional</h3>
                     <p class="text-slate-400 text-sm mt-1">For growing businesses needing more power.</p>
                 </div>
-                <div class="mb-6">
-                    <span class="text-4xl font-bold text-white">$79</span>
-                    <span class="text-slate-400">/mo</span>
+                <div class="mb-6 space-y-2.5">
+                    <div class="text-5xl font-black text-white tracking-tight leading-none">
+                        <?= htmlspecialchars($proPlanPricing['usd_per_month']) ?>
+                    </div>
+                    <p class="text-sm text-slate-400"><?= htmlspecialchars($proPlanPricing['ghs_billed_line']) ?></p>
                 </div>
                 <ul class="space-y-4 mb-8 flex-1">
                     <li class="flex items-start">
@@ -791,6 +802,9 @@
                 </a>
             </div>
         </div>
+        <p class="text-center text-xs text-slate-500 mt-10 max-w-2xl mx-auto leading-relaxed">
+            <?= htmlspecialchars($proPlanPricing['disclaimer']) ?>
+        </p>
     </div>
 </div>
 

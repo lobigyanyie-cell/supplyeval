@@ -1,6 +1,14 @@
 <?php
+
+use App\Config\Settings;
+use App\Helpers\PricingDisplay;
+
 $title = "Upgrade Subscription";
 ob_start();
+
+$currency = Settings::get('currency', 'GHS');
+$price = Settings::get('premium_price', '350');
+$priceDisplay = PricingDisplay::formatMonthly($price);
 ?>
 
 <div class="min-h-screen bg-slate-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
@@ -43,8 +51,8 @@ ob_start();
                 <div class="rounded-2xl bg-brand-50 p-6 border border-brand-100 shadow-sm relative overflow-hidden">
                     <div class="absolute top-0 right-0 -mr-8 -mt-8 w-24 h-24 rounded-full bg-brand-500/10 blur-2xl">
                     </div>
-                    <div class="flex items-center justify-between relative z-10">
-                        <div>
+                    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-6 relative z-10">
+                        <div class="flex-1 min-w-0">
                             <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Pro Plan</h3>
                             <p class="text-xs text-slate-500 mt-1">Unlimited Suppliers & Evaluations</p>
                             <ul class="mt-4 space-y-2">
@@ -66,14 +74,11 @@ ob_start();
                                 </li>
                             </ul>
                         </div>
-                        <div class="text-right">
-                            <?php
-                            $currency = \App\Config\Settings::get('currency', 'GHS');
-                            $price = \App\Config\Settings::get('premium_price', '350');
-                            ?>
-                            <div class="text-3xl font-black text-brand-600">₵<?= number_format($price, 0) ?></div>
-                            <div class="text-xs font-bold text-slate-400 text-right uppercase tracking-tighter">per
-                                month</div>
+                        <div class="text-left sm:text-right space-y-2 shrink-0">
+                            <div class="text-4xl sm:text-5xl font-black text-brand-600 tracking-tight leading-none">
+                                <?= htmlspecialchars($priceDisplay['usd_per_month']) ?>
+                            </div>
+                            <p class="text-sm text-slate-500"><?= htmlspecialchars($priceDisplay['ghs_billed_line']) ?></p>
                         </div>
                     </div>
                 </div>
@@ -84,11 +89,17 @@ ob_start();
                 <input type="hidden" id="amount" value="<?= $price ?>">
                 <input type="hidden" id="currency" value="<?= $currency ?>">
 
+                <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 mb-4">
+                    <p class="text-sm font-semibold text-slate-800 text-center">
+                        <?= htmlspecialchars($priceDisplay['charge_notice']) ?>
+                    </p>
+                </div>
                 <div class="pt-2">
                     <button type="button" onclick="payWithPaystack()"
                         class="w-full flex justify-center py-4 px-4 border border-transparent rounded-xl shadow-lg shadow-brand-500/25 text-base font-bold text-white bg-slate-900 hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 transition-all transform active:scale-[0.98]">
                         Upgrade Now
                     </button>
+                    <p class="mt-3 text-center text-xs text-slate-500"><?= htmlspecialchars($priceDisplay['disclaimer']) ?></p>
                     <p class="mt-4 text-center text-xs text-slate-400 flex items-center justify-center gap-2">
                         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd"
@@ -149,9 +160,6 @@ ob_start();
         handler.openIframe();
     }
 </script>
-</div>
-</div>
-</div>
 
 <?php
 $content = ob_get_clean();
