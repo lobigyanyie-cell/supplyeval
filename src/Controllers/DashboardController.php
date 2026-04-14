@@ -222,7 +222,10 @@ class DashboardController extends Controller
             $settings[$row['setting_key']] = $row['setting_value'];
         }
 
-        $this->view('dashboard/system/settings', ['settings' => $settings]);
+        $this->view('dashboard/system/settings', [
+            'settings' => $settings,
+            'email_debug' => \App\Services\EmailService::debugState(),
+        ]);
     }
 
     public function saveSettings()

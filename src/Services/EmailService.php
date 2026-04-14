@@ -8,6 +8,37 @@ class EmailService
 {
     private static string $lastError = '';
 
+    private static function readBrevoKeyFromEnv(): string
+    {
+        return trim((string) (getenv('BREVO_API_KEY') ?: ''));
+    }
+
+    private static function readBrevoKeyFromDb(): string
+    {
+        return trim((string) Settings::get('brevo_api_key', ''));
+    }
+
+    public static function debugState(): array
+    {
+        $envKey = self::readBrevoKeyFromEnv();
+        $dbKey = self::readBrevoKeyFromDb();
+        $effective = $envKey !== '' ? $envKey : $dbKey;
+        $source = $envKey !== '' ? 'env' : ($dbKey !== '' ? 'db' : 'none');
+
+        return [
+            'source' => $source,
+            'effective_len' => strlen($effective),
+            'effective_prefix' => substr($effective, 0, 8),
+            'effective_looks_brevo' => str_starts_with($effective, 'xkeysib-'),
+            'env_len' => strlen($envKey),
+            'env_prefix' => substr($envKey, 0, 8),
+            'env_looks_brevo' => str_starts_with($envKey, 'xkeysib-'),
+            'db_len' => strlen($dbKey),
+            'db_prefix' => substr($dbKey, 0, 8),
+            'db_looks_brevo' => str_starts_with($dbKey, 'xkeysib-'),
+        ];
+    }
+
     public static function getLastError(): string
     {
         return self::$lastError;
@@ -19,11 +50,15 @@ class EmailService
     public static function send($to, $subject, $messageBody, $ctaText = null, $ctaUrl = null)
     {
         self::$lastError = '';
-        $brevoApiKey = trim((string) (getenv('BREVO_API_KEY') ?: Settings::get('brevo_api_key', '')));
+        $brevoApiKey = self::readBrevoKeyFromEnv();
+        if ($brevoApiKey === '') {
+            $brevoApiKey = self::readBrevoKeyFromDb();
+        }
         $sendgridApiKey = trim((string) (getenv('SENDGRID_API_KEY') ?: Settings::get('sendgrid_api_key', '')));
         $fromEmail = trim((string) Settings::get('smtp_from', 'noreply@suppliereval.com'));
         $siteName = Settings::get('site_name', 'SupplierEval');
         $htmlContent = self::getTemplate($subject, $messageBody, $ctaText, $ctaUrl);
+        
 
         if (!empty($brevoApiKey) && self::sendViaBrevo($brevoApiKey, $to, $subject, $htmlContent, $fromEmail, $siteName)) {
             return true;

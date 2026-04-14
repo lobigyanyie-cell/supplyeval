@@ -198,6 +198,17 @@
                             </button>
                         </div>
                     </div>
+                    <?php if (!empty($email_debug)): ?>
+                        <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs text-slate-700 space-y-1">
+                            <p class="font-black uppercase tracking-wider text-slate-600">Email Runtime Debug</p>
+                            <p>Active source: <span class="font-semibold"><?= htmlspecialchars($email_debug['source'] ?? 'none') ?></span></p>
+                            <p>Active key length: <span class="font-semibold"><?= (int) ($email_debug['effective_len'] ?? 0) ?></span></p>
+                            <p>Active key prefix valid: <span class="font-semibold"><?= !empty($email_debug['effective_looks_brevo']) ? 'yes' : 'no' ?></span></p>
+                            <p>ENV key length/prefix: <span class="font-semibold"><?= (int) ($email_debug['env_len'] ?? 0) ?> / <?= htmlspecialchars($email_debug['env_prefix'] ?? '') ?></span></p>
+                            <p>DB key length/prefix: <span class="font-semibold"><?= (int) ($email_debug['db_len'] ?? 0) ?> / <?= htmlspecialchars($email_debug['db_prefix'] ?? '') ?></span></p>
+                            <p class="text-slate-500">Only length and first 8 chars are shown for safety.</p>
+                        </div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
