@@ -22,6 +22,9 @@
     <?php elseif (($_GET['test'] ?? '') === 'failed'): ?>
         <div class="bg-rose-50 border border-rose-100 text-rose-700 px-6 py-4 rounded-2xl">
             <span class="font-bold">Test email failed. Check your Brevo/SendGrid key and verified sender.</span>
+            <?php if (!empty($_GET['reason'])): ?>
+                <p class="mt-2 text-sm font-medium break-words"><?= htmlspecialchars($_GET['reason']) ?></p>
+            <?php endif; ?>
         </div>
     <?php elseif (($_GET['test'] ?? '') === 'invalid_email'): ?>
         <div class="bg-amber-50 border border-amber-100 text-amber-800 px-6 py-4 rounded-2xl">

@@ -269,7 +269,8 @@ class DashboardController extends Controller
             return;
         }
 
-        $this->redirect('/admin/settings?test=failed');
+        $reason = \App\Services\EmailService::getLastError();
+        $this->redirect('/admin/settings?test=failed&reason=' . rawurlencode($reason));
     }
     public function suspendCompany()
     {

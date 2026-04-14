@@ -6,11 +6,19 @@ use App\Config\Settings;
 
 class EmailService
 {
+    private static string $lastError = '';
+
+    public static function getLastError(): string
+    {
+        return self::$lastError;
+    }
+
     /**
      * Send a professional HTML email via Brevo/SendGrid with mail() fallback.
      */
     public static function send($to, $subject, $messageBody, $ctaText = null, $ctaUrl = null)
     {
+        self::$lastError = '';
         $brevoApiKey = Settings::get('brevo_api_key', getenv('BREVO_API_KEY') ?: '');
         $sendgridApiKey = Settings::get('sendgrid_api_key', getenv('SENDGRID_API_KEY') ?: '');
         $fromEmail = Settings::get('smtp_from', 'noreply@suppliereval.com');
@@ -33,9 +41,16 @@ class EmailService
                 'From: ' . $siteName . ' <' . $fromEmail . '>',
                 'X-Mailer: PHP/' . phpversion()
             ];
-            return mail($to, $subject, $htmlContent, implode("\r\n", $headers));
+            $ok = mail($to, $subject, $htmlContent, implode("\r\n", $headers));
+            if (!$ok) {
+                self::$lastError = 'PHP mail() failed.';
+            }
+            return $ok;
         }
 
+        if (self::$lastError === '') {
+            self::$lastError = 'No email provider accepted the message.';
+        }
         return false;
     }
 
@@ -69,8 +84,13 @@ class EmailService
         curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
-        curl_exec($ch);
+        $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        if ($response === false) {
+            self::$lastError = 'SendGrid cURL error: ' . curl_error($ch);
+        } elseif ($httpCode < 200 || $httpCode >= 300) {
+            self::$lastError = 'SendGrid error (' . $httpCode . '): ' . self::normalizeError($response);
+        }
         curl_close($ch);
 
         return $httpCode >= 200 && $httpCode < 300;
@@ -100,8 +120,13 @@ class EmailService
         curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
-        curl_exec($ch);
+        $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        if ($response === false) {
+            self::$lastError = 'Brevo cURL error: ' . curl_error($ch);
+        } elseif ($httpCode < 200 || $httpCode >= 300) {
+            self::$lastError = 'Brevo error (' . $httpCode . '): ' . self::normalizeError($response);
+        }
         curl_close($ch);
 
         return $httpCode >= 200 && $httpCode < 300;
@@ -163,5 +188,23 @@ class EmailService
         </body>
         </html>
         ";
+    }
+
+    private static function normalizeError(string $response): string
+    {
+        $decoded = json_decode($response, true);
+        if (is_array($decoded)) {
+            if (!empty($decoded['message']) && is_string($decoded['message'])) {
+                return $decoded['message'];
+            }
+            if (!empty($decoded['errors']) && is_array($decoded['errors'])) {
+                $first = $decoded['errors'][0] ?? null;
+                if (is_array($first) && !empty($first['message']) && is_string($first['message'])) {
+                    return $first['message'];
+                }
+            }
+        }
+        $trimmed = trim($response);
+        return $trimmed === '' ? 'Unknown provider error' : $trimmed;
     }
 }
