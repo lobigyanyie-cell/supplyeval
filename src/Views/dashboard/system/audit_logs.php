@@ -47,6 +47,12 @@
                         </tr>
                     <?php else: ?>
                         <?php foreach ($logs as $log): ?>
+                            <?php
+                            $userName = (string) ($log['user_name'] ?? 'System');
+                            $action = (string) ($log['action'] ?? 'Unknown');
+                            $details = (string) ($log['details'] ?? '');
+                            $ipAddress = (string) ($log['ip_address'] ?? '');
+                            ?>
                             <tr class="hover:bg-slate-50/50 transition-colors group">
                                 <td class="px-6 py-4 text-sm text-slate-500 font-medium font-mono">
                                     <?= date('M d, H:i:s', strtotime($log['created_at'])) ?>
@@ -55,37 +61,37 @@
                                     <div class="flex items-center gap-3">
                                         <div
                                             class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-600 border border-white shadow-sm">
-                                            <?= substr($log['user_name'], 0, 1) ?>
+                                            <?= substr($userName, 0, 1) ?>
                                         </div>
                                         <span class="text-sm font-bold text-slate-900">
-                                            <?= htmlspecialchars($log['user_name']) ?>
+                                            <?= htmlspecialchars($userName) ?>
                                         </span>
                                     </div>
                                 </td>
                                 <td class="px-6 py-4">
                                     <?php
                                     $actionClass = 'bg-slate-100 text-slate-600';
-                                    if (strpos($log['action'], 'Deleted') !== false)
+                                    if (strpos($action, 'Deleted') !== false)
                                         $actionClass = 'bg-red-50 text-red-600 border border-red-100';
-                                    if (strpos($log['action'], 'Created') !== false)
+                                    if (strpos($action, 'Created') !== false)
                                         $actionClass = 'bg-emerald-50 text-emerald-600 border border-emerald-100';
-                                    if (strpos($log['action'], 'Login Success') !== false)
+                                    if (strpos($action, 'Login Success') !== false)
                                         $actionClass = 'bg-blue-50 text-blue-600 border border-blue-100';
                                     ?>
                                     <span
                                         class="px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest <?= $actionClass ?>">
-                                        <?= htmlspecialchars($log['action']) ?>
+                                        <?= htmlspecialchars($action) ?>
                                     </span>
                                 </td>
                                 <td class="px-6 py-4">
                                     <p class="text-sm text-slate-600 max-w-xs truncate"
-                                        title="<?= htmlspecialchars($log['details']) ?>">
-                                        <?= htmlspecialchars($log['details']) ?>
+                                        title="<?= htmlspecialchars($details) ?>">
+                                        <?= htmlspecialchars($details) ?>
                                     </p>
                                 </td>
                                 <td class="px-6 py-4 text-right">
                                     <span class="text-xs font-mono text-slate-400">
-                                        <?= htmlspecialchars($log['ip_address']) ?>
+                                        <?= htmlspecialchars($ipAddress) ?>
                                     </span>
                                 </td>
                             </tr>

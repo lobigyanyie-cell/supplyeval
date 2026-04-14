@@ -18,27 +18,6 @@ class EmailService
         return trim((string) Settings::get('brevo_api_key', ''));
     }
 
-    public static function debugState(): array
-    {
-        $envKey = self::readBrevoKeyFromEnv();
-        $dbKey = self::readBrevoKeyFromDb();
-        $effective = $envKey !== '' ? $envKey : $dbKey;
-        $source = $envKey !== '' ? 'env' : ($dbKey !== '' ? 'db' : 'none');
-
-        return [
-            'source' => $source,
-            'effective_len' => strlen($effective),
-            'effective_prefix' => substr($effective, 0, 8),
-            'effective_looks_brevo' => str_starts_with($effective, 'xkeysib-'),
-            'env_len' => strlen($envKey),
-            'env_prefix' => substr($envKey, 0, 8),
-            'env_looks_brevo' => str_starts_with($envKey, 'xkeysib-'),
-            'db_len' => strlen($dbKey),
-            'db_prefix' => substr($dbKey, 0, 8),
-            'db_looks_brevo' => str_starts_with($dbKey, 'xkeysib-'),
-        ];
-    }
-
     public static function getLastError(): string
     {
         return self::$lastError;
