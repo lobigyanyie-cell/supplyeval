@@ -19,9 +19,9 @@ class EmailService
     public static function send($to, $subject, $messageBody, $ctaText = null, $ctaUrl = null)
     {
         self::$lastError = '';
-        $brevoApiKey = Settings::get('brevo_api_key', getenv('BREVO_API_KEY') ?: '');
-        $sendgridApiKey = Settings::get('sendgrid_api_key', getenv('SENDGRID_API_KEY') ?: '');
-        $fromEmail = Settings::get('smtp_from', 'noreply@suppliereval.com');
+        $brevoApiKey = trim((string) (getenv('BREVO_API_KEY') ?: Settings::get('brevo_api_key', '')));
+        $sendgridApiKey = trim((string) (getenv('SENDGRID_API_KEY') ?: Settings::get('sendgrid_api_key', '')));
+        $fromEmail = trim((string) Settings::get('smtp_from', 'noreply@suppliereval.com'));
         $siteName = Settings::get('site_name', 'SupplierEval');
         $htmlContent = self::getTemplate($subject, $messageBody, $ctaText, $ctaUrl);
 
