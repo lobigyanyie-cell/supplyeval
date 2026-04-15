@@ -51,6 +51,14 @@ php public/migrate_company_plan.php
 
 Or execute **`sql/migrate_company_plan.sql`** in the MySQL console (skip if the column already exists).
 
+**Team invite pending flag?** If `users.invite_pending` is missing, run once:
+
+```bash
+php public/migrate_invite_pending.php
+```
+
+Or execute **`sql/migrate_invite_pending.sql`** in the MySQL console.
+
 ## 5. Open the app
 
 Your public URL will look like:

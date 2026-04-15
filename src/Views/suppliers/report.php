@@ -10,6 +10,7 @@
     <title>Supplier Performance Report -
         <?= htmlspecialchars($company['name']) ?>
     </title>
+    <link rel="icon" type="image/svg+xml" href="/saas/public/favicon.svg">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -65,7 +66,7 @@
         <!-- Header -->
         <div class="p-12 border-b-2 border-slate-100 flex justify-between items-start">
             <div>
-                <img src="/saas/public/img/logo.png" alt="" class="h-10 mb-6 hidden">
+                <img src="/saas/public/assets/logo-mark.svg" alt="SupplierEval logo" class="h-10 mb-6">
                 <div
                     class="w-12 h-12 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-black text-2xl mb-4 shadow-lg shadow-indigo-600/30">
                     S</div>

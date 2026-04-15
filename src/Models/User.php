@@ -65,7 +65,7 @@ class User
             return false;
         }
 
-        $query = "SELECT id, company_id, name, email, password, role FROM " . $this->table_name . " WHERE email = :email LIMIT 1";
+        $query = "SELECT id, company_id, name, email, password, role, invite_pending FROM " . $this->table_name . " WHERE email = :email LIMIT 1";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(":email", $email);
         $stmt->execute();

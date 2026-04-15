@@ -51,6 +51,7 @@
                             $userName = (string) ($log['user_name'] ?? 'System');
                             $action = (string) ($log['action'] ?? 'Unknown');
                             $details = (string) ($log['details'] ?? '');
+                            $detailsText = trim($details) !== '' ? $details : 'No details provided';
                             $ipAddress = (string) ($log['ip_address'] ?? '');
                             ?>
                             <tr class="hover:bg-slate-50/50 transition-colors group">
@@ -85,8 +86,8 @@
                                 </td>
                                 <td class="px-6 py-4">
                                     <p class="text-sm text-slate-600 max-w-xs truncate"
-                                        title="<?= htmlspecialchars($details) ?>">
-                                        <?= htmlspecialchars($details) ?>
+                                        title="<?= htmlspecialchars($detailsText) ?>">
+                                        <?= htmlspecialchars($detailsText) ?>
                                     </p>
                                 </td>
                                 <td class="px-6 py-4 text-right">

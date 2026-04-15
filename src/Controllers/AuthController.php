@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Config\PasswordReset;
 use App\Models\User;
 use App\Models\Company;
 use App\Services\AuditLogger;
@@ -124,6 +125,12 @@ class AuthController extends Controller
         $loggedInUser = $user->login($email, $password);
 
         if ($loggedInUser) {
+            if (!empty($loggedInUser['invite_pending'])) {
+                $this->view('auth/login', [
+                    'error' => 'Please set your password using the link in your invitation email before signing in.',
+                ]);
+                return;
+            }
             // Check if company is suspended
             if ($loggedInUser['company_id']) {
                 $db = new \App\Config\Database();
@@ -151,7 +158,7 @@ class AuthController extends Controller
                 unset($_SESSION['company_plan']);
             }
 
-            AuditLogger::log("Login Success");
+            AuditLogger::log("Login Success", "Email: {$loggedInUser['email']}, Role: {$loggedInUser['role']}");
             $this->redirect('/dashboard');
         } else {
             AuditLogger::log("Login Failed", "Email attempt: $email");
@@ -293,6 +300,13 @@ class AuthController extends Controller
             $stmt = $conn->prepare("DELETE FROM password_resets WHERE email = :email");
             $stmt->execute(['email' => $email]);
 
+            try {
+                $stmt = $conn->prepare('UPDATE users SET invite_pending = 0 WHERE email = :email');
+                $stmt->execute(['email' => $email]);
+            } catch (\Throwable $e) {
+                // Column may be missing on unmigrated DBs
+            }
+
             AuditLogger::log("Password Changed", "Email: $email");
 
             $this->view('auth/login', ['success' => 'Password reset successfully. You can now log in.']);
@@ -327,7 +341,8 @@ class AuthController extends Controller
 
     private function findValidResetByToken(\PDO $conn, string $token): ?array
     {
-        $stmt = $conn->prepare("SELECT email FROM password_resets WHERE token = :token AND created_at >= DATE_SUB(NOW(), INTERVAL 1 HOUR) LIMIT 1");
+        $h = (int) PasswordReset::TOKEN_TTL_HOURS;
+        $stmt = $conn->prepare("SELECT email FROM password_resets WHERE token = :token AND created_at >= DATE_SUB(NOW(), INTERVAL {$h} HOUR) LIMIT 1");
         $stmt->execute(['token' => $token]);
         $reset = $stmt->fetch(\PDO::FETCH_ASSOC);
 

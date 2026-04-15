@@ -100,6 +100,7 @@ $routes = [
         '/admin/settings/test-email' => 'DashboardController@sendTestEmail',
         '/users/create' => 'UserController@create',
         '/users/store' => 'UserController@store',
+        '/users/resend-invite' => 'UserController@resendInvite',
         '/users/delete' => 'UserController@delete',
         '/webhook/paystack' => 'WebhookController@handle',
         '/forgot-password' => 'AuthController@sendResetLink',

@@ -40,6 +40,7 @@ A production-ready, multi-tenant Supplier Evaluation & Decision Support System b
    - Fresh installs using `sql/schema.sql` include a `settings` table with defaults.
    - If you upgrade an older database, run once: `php public/migrate_settings.php`
    - If your database predates password recovery support, run once: `php public/migrate_password_resets.php`
+   - For **pending team invites** (`users.invite_pending`), run once: `php public/migrate_invite_pending.php` (or apply `sql/migrate_invite_pending.sql`).
    - System Admin can set the **evaluation scoring service** base URL and fallback in **Platform Settings** (or use `EVALUATION_SERVICE_URL` / `EVALUATION_SERVICE_FALLBACK` in the environment).
    - **Plan tiers** (Starter / Professional / Enterprise on `companies.plan`): if your database predates this column, run once: `php public/migrate_company_plan.php` (or apply `sql/migrate_company_plan.sql`). New installs from `sql/schema.sql` already include it.
 
