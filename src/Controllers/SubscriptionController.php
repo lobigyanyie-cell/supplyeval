@@ -3,6 +3,8 @@
 namespace App\Controllers;
 
 use App\Config\Database;
+use App\Config\Settings;
+use App\Helpers\PricingDisplay;
 use App\Services\AuditLogger;
 use App\Services\CompanyPlan;
 
@@ -85,7 +87,9 @@ class SubscriptionController extends Controller
             // Update Session
             $_SESSION['subscription_status'] = 'active';
 
-            AuditLogger::log("Subscription Upgraded", "Reference: $reference, Amount: GHS $amount");
+            $billingCurrency = strtoupper(trim(Settings::get('currency', 'GHS')));
+            $amountLabel = PricingDisplay::formatMoneyAmount($amount, $billingCurrency);
+            AuditLogger::log('Subscription Upgraded', "Reference: $reference, Amount: $amountLabel");
 
             // Success Redirect
             $this->redirect('/dashboard?payment=success');

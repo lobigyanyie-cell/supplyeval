@@ -1,4 +1,11 @@
-<?php ob_start(); ?>
+<?php
+
+use App\Config\Settings;
+use App\Helpers\PricingDisplay;
+
+ob_start();
+$billingCurrency = Settings::get('currency', 'GHS');
+?>
 
 <div class="space-y-6">
     <div class="flex items-center justify-between">
@@ -19,7 +26,7 @@
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
             <p class="text-sm font-medium text-slate-500 mb-1">Total Spent</p>
             <h3 class="text-2xl font-bold text-slate-900">
-                ₵<?= number_format(array_sum(array_column($transactions, 'amount')), 2) ?></h3>
+                <?= htmlspecialchars(PricingDisplay::formatMoneyAmount(array_sum(array_column($transactions, 'amount')), $billingCurrency)) ?></h3>
         </div>
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
             <p class="text-sm font-medium text-slate-500 mb-1">Last Payment Date</p>
@@ -76,7 +83,7 @@
                                     <?= date('M d, Y', strtotime($tx['created_at'])) ?>
                                 </td>
                                 <td class="px-6 py-4 text-sm font-bold text-slate-900">
-                                    ₵<?= number_format($tx['amount'], 2) ?>
+                                    <?= htmlspecialchars(PricingDisplay::formatMoneyAmount($tx['amount'], $billingCurrency)) ?>
                                 </td>
                                 <td class="px-6 py-4 italic">
                                     <span

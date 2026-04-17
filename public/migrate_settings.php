@@ -32,6 +32,7 @@ $defaults = [
     'site_name' => 'SupplierEval',
     'support_email' => '',
     'currency' => 'GHS',
+    'ghs_per_usd' => '11.05',
     'premium_price' => '350',
     'trial_days' => '14',
     'paystack_public_key' => '',

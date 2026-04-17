@@ -1,4 +1,11 @@
-<?php ob_start(); ?>
+<?php
+
+use App\Config\Settings;
+use App\Helpers\PricingDisplay;
+
+ob_start();
+$billingCurrency = Settings::get('currency', 'GHS');
+?>
 
 <div class="max-w-4xl mx-auto space-y-8 py-8 px-4 sm:px-6 lg:px-8">
     <!-- Action Bar -->
@@ -117,10 +124,11 @@
                                 <p class="text-sm text-slate-500">Full access to all features (30 Days)</p>
                             </td>
                             <td class="py-6 text-center text-slate-600">1</td>
-                            <td class="py-6 text-right text-slate-600">₵<?= number_format($transaction['amount'], 2) ?>
+                            <td class="py-6 text-right text-slate-600">
+                                <?= htmlspecialchars(PricingDisplay::formatMoneyAmount($transaction['amount'], $billingCurrency)) ?>
                             </td>
                             <td class="py-6 text-right font-bold text-slate-900">
-                                ₵<?= number_format($transaction['amount'], 2) ?></td>
+                                <?= htmlspecialchars(PricingDisplay::formatMoneyAmount($transaction['amount'], $billingCurrency)) ?></td>
                         </tr>
                     </tbody>
                 </table>
@@ -131,16 +139,16 @@
                 <div class="w-full max-w-xs space-y-4">
                     <div class="flex justify-between text-sm">
                         <span class="text-slate-500 uppercase font-bold tracking-tight">Subtotal</span>
-                        <span class="text-slate-900 font-bold">₵<?= number_format($transaction['amount'], 2) ?></span>
+                        <span class="text-slate-900 font-bold"><?= htmlspecialchars(PricingDisplay::formatMoneyAmount($transaction['amount'], $billingCurrency)) ?></span>
                     </div>
                     <div class="flex justify-between text-sm">
                         <span class="text-slate-500 uppercase font-bold tracking-tight">Tax (0%)</span>
-                        <span class="text-slate-900 font-bold">₵0.00</span>
+                        <span class="text-slate-900 font-bold"><?= htmlspecialchars(PricingDisplay::formatMoneyAmount(0, $billingCurrency)) ?></span>
                     </div>
                     <div class="pt-4 border-t border-slate-200 flex justify-between items-end">
                         <span class="text-brand-600 uppercase font-black tracking-widest text-lg">Total</span>
                         <span
-                            class="text-4xl font-black text-slate-900">₵<?= number_format($transaction['amount'], 2) ?></span>
+                            class="text-4xl font-black text-slate-900"><?= htmlspecialchars(PricingDisplay::formatMoneyAmount($transaction['amount'], $billingCurrency)) ?></span>
                     </div>
                 </div>
             </div>

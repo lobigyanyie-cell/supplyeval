@@ -2,16 +2,26 @@
 
 namespace App\Helpers;
 
+use App\Config\Settings;
+
 /**
  * Display-only pricing helpers.
  *
  * The app stores `premium_price` as an amount in the selected Settings currency (GHS/USD/NGN).
- * This helper formats the price for UI and provides a clear charge notice.
+ * USD ↔ GHS equivalents use `ghs_per_usd` from Platform Settings (see admin).
  */
 class PricingDisplay
 {
-    /** 1 USD = N GHS (demo rate for UI only). */
-    public const GHS_PER_USD = 12.0;
+    /** Fallback when setting is missing or invalid (1 USD = N GHS, display only). */
+    private const GHS_PER_USD_DEFAULT = 11.05;
+
+    private static function ghsPerUsd(): float
+    {
+        $raw = Settings::get('ghs_per_usd', (string) self::GHS_PER_USD_DEFAULT);
+        $v = (float) $raw;
+
+        return $v > 0 ? $v : self::GHS_PER_USD_DEFAULT;
+    }
 
     /**
      * @param float|string $amount Value from settings (e.g. premium_price), in Settings currency
@@ -36,15 +46,17 @@ class PricingDisplay
         $disclaimer = '';
         $ghsLine = '';
 
+        $rate = self::ghsPerUsd();
+
         if ($currency === 'USD') {
             $usd = $value;
-            $ghs = $usd * self::GHS_PER_USD;
+            $ghs = $usd * $rate;
             $chargeNotice = 'You will be charged $' . number_format($usd, 2) . ' (USD)';
             $ghsLine = '≈ ₵' . number_format($ghs, 2) . ' equivalent (display only)';
             $disclaimer = '*Payments processed in USD.';
         } elseif ($currency === 'GHS') {
             $ghs = $value;
-            $usd = $ghs > 0 ? $ghs / self::GHS_PER_USD : 0.0;
+            $usd = $ghs > 0 ? $ghs / $rate : 0.0;
             $ghsDecimals = (floor($ghs) === $ghs) ? 0 : 2;
             $chargeNotice = 'You will be charged ₵' . number_format($ghs, $ghsDecimals) . ' (GHS)';
             $ghsLine = '₵' . number_format($ghs, $ghsDecimals) . ' billed in GHS';
@@ -63,5 +75,29 @@ class PricingDisplay
             'charge_notice' => $chargeNotice,
             'disclaimer' => $disclaimer,
         ];
+    }
+
+    /**
+     * Format a stored transaction amount for UI using the app's billing currency (Settings).
+     * Amounts are assumed to be in major units (same as Paystack verify `data.amount` / 100).
+     */
+    public static function formatMoneyAmount(float|string $amount, string $currency = 'GHS'): string
+    {
+        $currency = strtoupper(trim($currency));
+        $value = (float) $amount;
+
+        if ($currency === 'USD') {
+            return '$' . number_format($value, 2);
+        }
+        if ($currency === 'GHS') {
+            $decimals = (floor($value) === $value) ? 0 : 2;
+
+            return '₵' . number_format($value, $decimals);
+        }
+        if ($currency === 'NGN') {
+            return '₦' . number_format($value, 2);
+        }
+
+        return $currency . ' ' . number_format($value, 2);
     }
 }

@@ -81,7 +81,7 @@
                 </div>
             </div>
             <div class="p-8 space-y-6">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
                     <div class="space-y-2">
                         <label class="text-sm font-black text-slate-700">Currency Code</label>
                         <select name="currency"
@@ -110,6 +110,16 @@
                         <input type="number" name="trial_days"
                             value="<?= htmlspecialchars($settings['trial_days'] ?? '14') ?>"
                             class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-bold">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-sm font-black text-slate-700">GHS per 1 USD</label>
+                        <input type="number" name="ghs_per_usd" step="0.01" min="0.01"
+                            value="<?= htmlspecialchars($settings['ghs_per_usd'] ?? '11.05') ?>"
+                            class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-black text-indigo-600"
+                            title="Approximate rate for USD ↔ ₵ lines on pricing pages (not live FX)">
+                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-tight leading-relaxed">
+                            Display-only conversion for landing &amp; upgrade pricing
+                        </p>
                     </div>
                 </div>
             </div>
