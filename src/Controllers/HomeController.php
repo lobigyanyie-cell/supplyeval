@@ -9,9 +9,10 @@ class HomeController extends Controller
 {
     public function index()
     {
-        $premiumGhs = (float) Settings::get('premium_price', '350');
+        $currency = (string) Settings::get('currency', 'USD');
+        $price = (float) Settings::get('premium_price', '79.99');
         $this->view('landing', [
-            'proPlanPricing' => PricingDisplay::formatMonthly($premiumGhs),
+            'proPlanPricing' => PricingDisplay::formatMonthly($price, $currency),
         ]);
     }
 }

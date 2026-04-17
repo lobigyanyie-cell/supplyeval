@@ -643,8 +643,7 @@ $proPlanPricing = $proPlanPricing ?? \App\Helpers\PricingDisplay::formatMonthly(
                         <span class="text-slate-500 text-lg font-medium">/trial</span>
                     </div>
                     <p class="text-xs text-slate-500 leading-relaxed">
-                        Then <span class="font-semibold text-slate-700"><?= htmlspecialchars($proPlanPricing['usd_per_month']) ?></span>
-                        <span class="block mt-1.5 text-slate-400"><?= htmlspecialchars($proPlanPricing['ghs_billed_line']) ?></span>
+                        Includes core supplier evaluation features for small teams.
                     </p>
                 </div>
                 <ul class="space-y-4 mb-8 flex-1">
@@ -796,9 +795,14 @@ $proPlanPricing = $proPlanPricing ?? \App\Helpers\PricingDisplay::formatMonthly(
                         <span class="text-slate-600 text-sm">SSO Integration</span>
                     </li>
                 </ul>
-                <a href="/saas/register?plan=enterprise"
+                <?php
+                $salesEmail = \App\Config\Settings::get('support_email', '') ?: 'sales@suppliereval.com';
+                $salesSubject = rawurlencode('Enterprise plan inquiry');
+                $salesBody = rawurlencode("Hi,\n\nI'm interested in the Enterprise plan for SupplierEval. Please contact me with pricing and onboarding details.\n\nCompany: \nTeam size: \nEstimated suppliers: \n\nThanks.");
+                ?>
+                <a href="mailto:<?= htmlspecialchars($salesEmail) ?>?subject=<?= $salesSubject ?>&body=<?= $salesBody ?>"
                     class="w-full block text-center py-3 px-4 border border-slate-200 rounded-xl text-slate-700 font-semibold hover:bg-slate-50 transition-colors">
-                    Start Enterprise Trial
+                    Contact Sales
                 </a>
             </div>
         </div>
